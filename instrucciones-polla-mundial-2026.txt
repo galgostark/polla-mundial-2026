@@ -1,0 +1,63 @@
+Eres un experto full-stack developer y product designer. Quiero que me ayudes a diseñar y construir una aplicación web completa para organizar **Quinielas o Pollas del Mundial de Fútbol FIFA**.
+
+### Nombre sugerido de la app:
+"Polla Mundial 2026" 
+
+### Descripción general:
+Es una plataforma privada para grupos de amigos donde organizan una quiniela del Mundial de la FIFA. Cada participante paga una cuota de entrada y llena sus predicciones de **todos los partidos** del mundial (fase de grupos + eliminatorias). El sistema actualiza automáticamente los resultados reales y genera una tabla de posiciones en tiempo real.
+
+### Requisitos funcionales:
+
+**1. Roles de usuario:**
+- Organizador (Admin): Crea la quiniela, configura el mundial, cobra la entrada (opcional), gestiona participantes.
+- Participantes: Se unen con un enlace de invitación, llenan sus predicciones y ven la tabla.
+
+**2. Flujo principal:**
+- El organizador crea una quiniela nueva con el ficture para el mundial de futbol de la fifa 2026.
+- Define el monto de la entrada (ej: S/50).
+- Genera un enlace de invitación.
+- Cada participante se registra o ingresa con nombre/apodo y paga (debe haber un selector para que el administrador pueda poner si el pego se realizo o no).
+- Cada participante debe predecir el marcador **exacto** de **todos los partidos** del mundial.
+
+**3. Sistema de puntuación:**
+- 3 puntos por acertar el resultado (ganador o empate).
+- 1 punto adicional por acertar el marcador exacto (ej: predijo 2-1 y fue 2-1).
+- 2 puntos por acertar un equipo que pase a octavos, 3 puntos por acertar cada equipos que pasa a cuartos y 4 por acertar cada equipo que pasa a semifinales, 5 por subacmpeon, 10 por acertar campeon
+- El sistema debe calcular automáticamente los puntos conforme se van registrando los resultados reales de los partidos.
+
+**4. Actualización de partidos:**
+- Base de datos con todos los partidos del mundial (fase de grupos, octavos, cuartos, semis, final, etc.).
+- El organizador (o sistema) actualiza el resultado real de cada partido, si se podria hacer via api publica seria genial
+- La tabla de posiciones se actualiza automáticamente.
+
+**5. Vistas principales:**
+- Dashboard general con tabla de posiciones (ranking).
+- Tabla detallada con columnas: Posición, Participante, Puntos totales, Aciertos exactos, Aciertos de resultado, etc.
+- Vista por participante: sus predicciones vs resultados reales.
+- Calendario de partidos con predicciones y resultados.
+- Estadísticas divertidas (mejor pronosticador por fase, más empates acertados, etc.).
+
+**6. Requisitos técnicos deseados:**
+- Totalmente responsive (móvil primero).
+- Interfaz atractiva, moderna y con tema futbolero.
+- Soporte completo en **español**.
+- Acceso mediante enlace sin necesidad de que todos se creen cuenta compleja (puede ser con email o solo nombre).
+- Velocidad rápida.
+- Posibilidad de exportar tabla a Excel/PDF.
+- Modo oscuro.
+
+**Tecnología sugerida:**
+- Opción A: Aplicación web con Next.js 15 + Supabase + Tailwind
+- Opción B: No-code (Bubble o FlutterFlow)
+Dime qué tecnología recomiendas y por qué.
+
+Quiero que primero me entregues:
+1. Nombre sugerido + tagline
+2. Estructura completa de pantallas/páginas
+3. Modelo de datos (tablas principales)
+4. Reglas detalladas de puntuación
+5. User flow completo
+
+¿Estás listo? Empecemos.
+
+supa: nUzHpPEMlcUexdog
