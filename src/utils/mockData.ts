@@ -74,7 +74,15 @@ export const generateMockMatches = (): Match[] => {
   const groups = ['A','B','C','D','E','F','G','H','I','J','K','L'];
   
   for (const grp of groups) {
-    const grpTeams = mockTeams.filter(t => t.group_letter === grp).sort((a, b) => a.id.localeCompare(b.id));
+    const grpTeams = mockTeams.filter(t => t.group_letter === grp).sort((a, b) => {
+      const getOrder = (id: string) => {
+        if (['MEX', 'CAN', 'BRA', 'USA', 'GER', 'NED', 'BEL', 'ESP', 'FRA', 'ARG', 'POR', 'ENG'].includes(id)) return 1;
+        if (['ZAF', 'BIH', 'MAR', 'PAR', 'CUW', 'JPN', 'EGY', 'CPV', 'SEN', 'DZA', 'COD', 'CRO'].includes(id)) return 2;
+        if (['KOR', 'QAT', 'HAI', 'AUS', 'CIV', 'SWE', 'IRN', 'KSA', 'IRQ', 'AUT', 'UZB', 'GHA'].includes(id)) return 3;
+        return 4;
+      };
+      return getOrder(a.id) - getOrder(b.id);
+    });
     
     // Distribución del fixture en la fase de grupos (6 fechas internas)
     const dates = [

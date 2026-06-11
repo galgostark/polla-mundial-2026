@@ -79,8 +79,15 @@ BEGIN
 
     -- A. FASE DE GRUPOS (72 partidos, del ID 1 al 72)
     FOR grp IN SELECT unnest(ARRAY['A','B','C','D','E','F','G','H','I','J','K','L']) LOOP
-        -- Obtener los 4 equipos de este grupo
-        SELECT ARRAY_AGG(id ORDER BY id) INTO t_ids FROM teams WHERE group_letter = grp;
+        -- Obtener los 4 equipos de este grupo en orden oficial (A1, A2, A3, A4)
+        SELECT ARRAY_AGG(id ORDER BY 
+            CASE 
+                WHEN id IN ('MEX', 'CAN', 'BRA', 'USA', 'GER', 'NED', 'BEL', 'ESP', 'FRA', 'ARG', 'POR', 'ENG') THEN 1
+                WHEN id IN ('ZAF', 'BIH', 'MAR', 'PAR', 'CUW', 'JPN', 'EGY', 'CPV', 'SEN', 'DZA', 'COD', 'CRO') THEN 2
+                WHEN id IN ('KOR', 'QAT', 'HAI', 'AUS', 'CIV', 'SWE', 'IRN', 'KSA', 'IRQ', 'AUT', 'UZB', 'GHA') THEN 3
+                ELSE 4 
+            END
+        ) INTO t_ids FROM teams WHERE group_letter = grp;
         
         -- Partido 1: 1 vs 2
         INSERT INTO matches (id, home_team_id, away_team_id, stage, match_date, status)
