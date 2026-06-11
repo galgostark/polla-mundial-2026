@@ -32,6 +32,7 @@ export default function UnirsePollaPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isLoginMode, setIsLoginMode] = useState(false);
 
   useEffect(() => {
     const checkSessionAndLoadPolla = async () => {
@@ -70,28 +71,58 @@ export default function UnirsePollaPage({ params }: PageProps) {
       setSubmitting(true);
       setError('');
 
-      // Validar si el apodo ya existe en esta polla
+      // Obtener participantes de esta polla
       const participants = await PollaService.getParticipants(pollaId);
-      const nameExists = participants.some(p => p.name.trim().toLowerCase() === name.trim().toLowerCase());
+      const existingPart = participants.find(p => p.name.trim().toLowerCase() === name.trim().toLowerCase());
       
-      if (nameExists) {
-        setError('¡Este apodo ya está en uso por otro participante! Por favor elige otro apodo o agrégale un distintivo.');
-        setSubmitting(false);
-        return;
-      }
+      if (isLoginMode) {
+        // --- LÓGICA DE INGRESO/LOGIN ---
+        if (!existingPart) {
+          setError(`No se encontró ningún participante con el apodo "${name}". Verifica que esté bien escrito o regístrate como participante nuevo.`);
+          setSubmitting(false);
+          return;
+        }
 
-      // Registrar al participante
-      const newPart = await PollaService.joinPolla(pollaId, name.trim(), email.trim() || undefined);
-      
-      // Guardar sesión en localStorage
-      localStorage.setItem(`m26_session_${pollaId}`, newPart.id);
-      
-      // Redirigir directamente a llenar su cartilla
-      router.push(`/polla/${pollaId}/pronosticos`);
+        // Si tiene un correo registrado en la base de datos, validar coincidencia
+        if (existingPart.email && existingPart.email.trim()) {
+          if (!email.trim()) {
+            setError('Este apodo tiene un correo registrado. Por favor ingrésalo para validar tu identidad.');
+            setSubmitting(false);
+            return;
+          }
+          if (existingPart.email.trim().toLowerCase() !== email.trim().toLowerCase()) {
+            setError('El correo electrónico no coincide con el registrado para este apodo.');
+            setSubmitting(false);
+            return;
+          }
+        }
+
+        // Guardar sesión en localStorage
+        localStorage.setItem(`m26_session_${pollaId}`, existingPart.id);
+        
+        // Redirigir al dashboard
+        router.push(`/polla/${pollaId}`);
+      } else {
+        // --- LÓGICA DE REGISTRO ---
+        if (existingPart) {
+          setError('¡Este apodo ya está en uso por otro participante! Si ya te registraste con este apodo, selecciona "Reingresar a mi cartilla" abajo para recuperar tu acceso. De lo contrario, elige otro apodo.');
+          setSubmitting(false);
+          return;
+        }
+
+        // Registrar al participante
+        const newPart = await PollaService.joinPolla(pollaId, name.trim(), email.trim() || undefined);
+        
+        // Guardar sesión en localStorage
+        localStorage.setItem(`m26_session_${pollaId}`, newPart.id);
+        
+        // Redirigir directamente a llenar su cartilla
+        router.push(`/polla/${pollaId}/pronosticos`);
+      }
       
     } catch (err) {
       console.error(err);
-      setError('Ocurrió un error al unirte a la polla. Por favor inténtalo de nuevo.');
+      setError('Ocurrió un error. Por favor inténtalo de nuevo.');
     } finally {
       setSubmitting(false);
     }
@@ -150,43 +181,47 @@ export default function UnirsePollaPage({ params }: PageProps) {
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold">
             <Sparkles className="h-3.5 w-3.5 text-accent animate-pulse" />
-            Invitación Recibida
+            {isLoginMode ? 'Reingreso a la Polla' : 'Invitación Recibida'}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
             {polla?.name}
           </h1>
           <p className="text-slate-400 text-xs">
-            ¡Te han invitado a unirte a este grupo! Rellena tus datos abajo para empezar a competir.
+            {isLoginMode 
+              ? 'Ingresa tu apodo y correo registrado para continuar tu competencia.' 
+              : '¡Te han invitado a unirte a este grupo! Rellena tus datos abajo para empezar a competir.'}
           </p>
         </div>
 
-        {/* Tarjeta del Pozo y Pago */}
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-850 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Coins className="h-4 w-4 text-accent" /> Cuota de Entrada
-            </span>
-            <span className="text-lg font-black text-accent">
-              {polla && polla.entry_fee > 0 ? `${polla.currency} ${polla.entry_fee}` : '¡Gratuito! 🎁'}
-            </span>
-          </div>
-
-          {polla?.payment_info && (
-            <div className="pt-2 border-t border-slate-800/60 text-left">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Método e Instrucciones del Organizador</span>
-              <p className="text-xs text-slate-300 font-mono mt-1 bg-slate-950/80 p-2.5 rounded-lg whitespace-pre-line text-center border border-slate-800">
-                {polla.payment_info}
-              </p>
+        {/* Tarjeta del Pozo y Pago (Solo se muestra en Registro o si el organizador definió pago) */}
+        {!isLoginMode && (
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-850 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <Coins className="h-4 w-4 text-accent" /> Cuota de Entrada
+              </span>
+              <span className="text-lg font-black text-accent">
+                {polla && polla.entry_fee > 0 ? `${polla.currency} ${polla.entry_fee}` : '¡Gratuito! 🎁'}
+              </span>
             </div>
-          )}
-        </div>
+
+            {polla?.payment_info && (
+              <div className="pt-2 border-t border-slate-800/60 text-left">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Método e Instrucciones del Organizador</span>
+                <p className="text-xs text-slate-300 font-mono mt-1 bg-slate-950/80 p-2.5 rounded-lg whitespace-pre-line text-center border border-slate-800">
+                  {polla.payment_info}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
           <div className="space-y-2">
             <label htmlFor="nickname" className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Tu Apodo o Nombre en la Polla
+              {isLoginMode ? 'Tu Apodo Registrado' : 'Tu Apodo o Nombre en la Polla'}
             </label>
             <input
               id="nickname"
@@ -200,23 +235,36 @@ export default function UnirsePollaPage({ params }: PageProps) {
               placeholder="Ej: El Dibu, Golazooo9, Lapadula"
               className="w-full px-4 py-3.5 bg-slate-950/80 border border-slate-850 rounded-xl text-white placeholder-slate-500 font-medium text-sm focus:outline-none focus:border-primary transition-colors text-center"
             />
-            <p className="text-[9px] text-slate-500">Este nombre será público para todos los demás amigos del grupo en la tabla de posiciones.</p>
+            <p className="text-[9px] text-slate-500">
+              {isLoginMode 
+                ? 'Ingresa exactamente el mismo apodo que utilizaste al registrarte.' 
+                : 'Este nombre será público para todos los demás amigos del grupo en la tabla de posiciones.'}
+            </p>
           </div>
 
           <div className="space-y-2">
             <label htmlFor="email" className="block text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
               Correo Electrónico
-              <span className="text-[9px] text-slate-500 font-bold lowercase tracking-normal font-sans">(opcional)</span>
+              <span className="text-[9px] text-slate-500 font-bold lowercase tracking-normal font-sans">
+                {isLoginMode ? '(solo si lo registraste)' : '(opcional)'}
+              </span>
             </label>
             <input
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
               placeholder="Ej: correo@ejemplo.com"
               className="w-full px-4 py-3.5 bg-slate-950/80 border border-slate-850 rounded-xl text-white placeholder-slate-500 font-medium text-sm focus:outline-none focus:border-primary transition-colors text-center"
             />
-            <p className="text-[9px] text-slate-500">Nos sirve para resguardar o recuperar tu cartilla de marcadores si cambias de celular.</p>
+            <p className="text-[9px] text-slate-500">
+              {isLoginMode 
+                ? 'Si no registraste correo electrónico en tu registro inicial, puedes dejar este campo vacío.' 
+                : 'Nos sirve para resguardar o recuperar tu cartilla de marcadores si cambias de celular.'}
+            </p>
           </div>
 
           {error && (
@@ -230,10 +278,30 @@ export default function UnirsePollaPage({ params }: PageProps) {
             disabled={submitting}
             className="w-full py-4 bg-primary text-primary-foreground font-black text-base rounded-xl hover:opacity-90 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
           >
-            {submitting ? 'Registrando...' : 'Unirme y Llenar Cartilla ⚽'}
+            {submitting 
+              ? (isLoginMode ? 'Ingresando...' : 'Registrando...') 
+              : (isLoginMode ? 'Reingresar y Ver Mi Cartilla ⚽' : 'Unirme y Llenar Cartilla ⚽')}
             <ChevronRight className="h-4 w-4" />
           </button>
         </form>
+
+        {/* Toggle para cambiar entre Registro y Login */}
+        <div className="text-center pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              setIsLoginMode(!isLoginMode);
+              setError('');
+              setName('');
+              setEmail('');
+            }}
+            className="text-xs font-bold text-accent hover:underline cursor-pointer transition-all active:scale-[0.98]"
+          >
+            {isLoginMode 
+              ? '¿Eres un participante nuevo? Registrarse aquí' 
+              : '¿Ya estás registrado? Reingresar a mi cartilla'}
+          </button>
+        </div>
 
       </main>
 
