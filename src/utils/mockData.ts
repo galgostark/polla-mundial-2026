@@ -1,4 +1,5 @@
 import { Team, Match, Polla, Participant, Prediction, BracketPrediction, FunStats } from '../types';
+import { officialMatchesRaw } from './officialMatches';
 
 // 1. Las 48 selecciones del Mundial de la FIFA 2026
 export const mockTeams: Team[] = [
@@ -67,56 +68,23 @@ export const mockTeams: Team[] = [
 // 2. Generador de Partidos (104 partidos)
 export const generateMockMatches = (): Match[] => {
   const matches: Match[] = [];
-  let mId = 1;
-  const startDate = new Date('2026-06-11T15:00:00-05:00'); // Hora de Perú (PET, UTC-5) / 3:00 PM
   
-  // A. FASE DE GRUPOS (72 partidos, 6 partidos por grupo A-L)
-  const groups = ['A','B','C','D','E','F','G','H','I','J','K','L'];
-  
-  for (const grp of groups) {
-    const grpTeams = mockTeams.filter(t => t.group_letter === grp).sort((a, b) => {
-      const getOrder = (id: string) => {
-        if (['MEX', 'CAN', 'BRA', 'USA', 'GER', 'NED', 'BEL', 'ESP', 'FRA', 'ARG', 'POR', 'ENG'].includes(id)) return 1;
-        if (['ZAF', 'BIH', 'MAR', 'PAR', 'CUW', 'JPN', 'EGY', 'CPV', 'SEN', 'DZA', 'COD', 'CRO'].includes(id)) return 2;
-        if (['KOR', 'QAT', 'HAI', 'AUS', 'CIV', 'SWE', 'IRN', 'KSA', 'IRQ', 'AUT', 'UZB', 'GHA'].includes(id)) return 3;
-        return 4;
-      };
-      return getOrder(a.id) - getOrder(b.id);
+  // A. FASE DE GRUPOS (72 partidos del fixture oficial)
+  for (const raw of officialMatchesRaw) {
+    const homeT = mockTeams.find(t => t.id === raw.home)!;
+    const awayT = mockTeams.find(t => t.id === raw.away)!;
+    matches.push({
+      id: raw.id,
+      home_team_id: raw.home,
+      away_team_id: raw.away,
+      home_score: null,
+      away_score: null,
+      stage: 'GROUPS',
+      match_date: new Date(raw.date).toISOString(),
+      status: 'SCHEDULED',
+      home_team: homeT,
+      away_team: awayT,
     });
-    
-    // Distribución del fixture en la fase de grupos (6 fechas internas)
-    const dates = [
-      new Date(startDate.getTime() + (mId - 1) * 8 * 60 * 60 * 1000),
-      new Date(startDate.getTime() + mId * 8 * 60 * 60 * 1000),
-      new Date(startDate.getTime() + (mId + 1) * 8 * 60 * 60 * 1000),
-      new Date(startDate.getTime() + (mId + 2) * 8 * 60 * 60 * 1000),
-      new Date(startDate.getTime() + (mId + 3) * 8 * 60 * 60 * 1000),
-      new Date(startDate.getTime() + (mId + 4) * 8 * 60 * 60 * 1000),
-    ];
-    
-    // Emparejamientos estándar de grupo (1vs2, 3vs4, 1vs3, 2vs4, 4vs1, 2vs3)
-    const order = [
-      [0, 1], [2, 3], [0, 2], [1, 3], [3, 0], [1, 2]
-    ];
-    
-    for (let k = 0; k < 6; k++) {
-      const homeT = grpTeams[order[k][0]];
-      const awayT = grpTeams[order[k][1]];
-      
-      matches.push({
-        id: mId,
-        home_team_id: homeT.id,
-        away_team_id: awayT.id,
-        home_score: null,
-        away_score: null,
-        stage: 'GROUPS',
-        match_date: dates[k].toISOString(),
-        status: 'SCHEDULED',
-        home_team: homeT,
-        away_team: awayT,
-      });
-      mId++;
-    }
   }
   
   // B. RONDA DE 32 (16 partidos, del ID 73 al 88)
