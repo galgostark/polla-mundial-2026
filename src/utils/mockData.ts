@@ -68,7 +68,7 @@ export const mockTeams: Team[] = [
 export const generateMockMatches = (): Match[] => {
   const matches: Match[] = [];
   let mId = 1;
-  const startDate = new Date('2026-06-11T17:00:00-05:00'); // Hora de México
+  const startDate = new Date('2026-06-11T15:00:00-05:00'); // Hora de Perú (PET, UTC-5) / 3:00 PM
   
   // A. FASE DE GRUPOS (72 partidos, 6 partidos por grupo A-L)
   const groups = ['A','B','C','D','E','F','G','H','I','J','K','L'];

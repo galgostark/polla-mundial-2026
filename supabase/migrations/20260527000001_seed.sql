@@ -69,7 +69,7 @@ DO $$
 DECLARE
     grp CHAR(1);
     t_ids TEXT[];
-    m_date TIMESTAMPTZ := '2026-06-11 17:00:00-05'; -- Fecha de inauguración: 11 de Junio de 2026
+    m_date TIMESTAMPTZ := '2026-06-11 15:00:00-05'; -- Fecha de inauguración: 11 de Junio de 2026 (3:00 PM hora de Perú)
     m_id INT := 1;
     stage_name TEXT := 'GROUPS';
     i INT;
