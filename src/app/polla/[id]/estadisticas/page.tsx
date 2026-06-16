@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   Award,
   Zap,
-  Calendar
+  Calendar,
+  Shield,
+  Rocket
 } from 'lucide-react';
 import Navbar from '../../../../components/Navbar';
 import { usePollaSession } from '../../../../hooks/usePollaSession';
@@ -65,6 +67,13 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
     }
   }, [pollaId]);
 
+  const formatWinners = (names: string[]) => {
+    if (!names || names.length === 0) return 'Aún sin ganadores';
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} y ${names[1]}`;
+    return `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`;
+  };
+
   if (sessionLoading || loadingData) {
     return (
       <div className="min-h-screen bg-[#070a13] text-white flex items-center justify-center">
@@ -78,10 +87,12 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
 
   // Verificar si hay alguna estadística válida (si ya terminaron partidos)
   const hasActiveStats = stats && (
-    stats.pulpoPaul !== null || 
+    stats.oraculoDelGol !== null || 
     stats.elPina !== null || 
     stats.nostradamus !== null || 
-    stats.reyDeLaFase !== null
+    stats.reyDeLaFase !== null ||
+    stats.elAmarrete !== null ||
+    stats.elOptimista !== null
   );
 
   return (
@@ -114,15 +125,15 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
 
         {/* CONTENIDO PRINCIPAL */}
         {hasActiveStats && stats ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            {/* 1. EL PULPO PAUL */}
+            {/* 1. EL ORÁCULO DEL GOL */}
             <div className="glass border border-border p-6 rounded-3xl flex flex-col justify-between gap-6 soccer-glow relative overflow-hidden group hover:scale-[1.02] transition-transform">
               <div className="absolute top-[-20%] right-[-10%] w-[120px] h-[120px] rounded-full bg-accent/5 blur-[30px] -z-10 group-hover:bg-accent/10 transition-colors" />
               
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
-                  <span className="text-3xl">🏆</span>
+                  <span className="text-3xl">🔮</span>
                   <span className="text-[10px] font-black tracking-wider uppercase bg-accent/15 text-accent px-2.5 py-1 rounded-full border border-accent/25">
                     Máximo Acierto Exacto
                   </span>
@@ -130,24 +141,26 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 
                 <div className="space-y-2">
                   <h3 className="text-lg font-black text-foreground group-hover:text-accent transition-colors">
-                    El Pulpo Paul de la Polla
+                    El Oráculo del Gol 🔮
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Distinción honorífica para el participante con mayor número de plenos (marcador exacto) adivinados. ¡Tiene un ojo del futuro!
+                    Distinción honorífica para el o los participantes con mayor número de plenos (marcador exacto) adivinados. ¡Tienen un ojo en el futuro!
                   </p>
                 </div>
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
-                {stats.pulpoPaul ? (
+                {stats.oraculoDelGol ? (
                   <>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Líder</span>
-                      <span className="text-base font-extrabold text-foreground">{stats.pulpoPaul.participantName}</span>
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        {stats.oraculoDelGol.participantNames.length > 1 ? 'Líderes' : 'Líder'}
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.oraculoDelGol.participantNames)}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plenos</span>
-                      <span className="text-xl font-black text-accent">{stats.pulpoPaul.count} aciertos</span>
+                      <span className="text-base font-black text-accent">{stats.oraculoDelGol.count} {stats.oraculoDelGol.count === 1 ? 'acierto' : 'aciertos'}</span>
                     </div>
                   </>
                 ) : (
@@ -173,7 +186,7 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                     El Piña del Grupo 🍍
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Premio de consolación para quien ha acumulado la mayor cantidad de pronósticos fallados por completo (cero puntos) en partidos finalizados. ¡La suerte le dio la espalda!
+                    Premio de consolación para quien ha acumulado la mayor cantidad de pronósticos fallados por completo (cero puntos) en partidos finalizados. ¡La suerte les dio la espalda!
                   </p>
                 </div>
               </div>
@@ -181,13 +194,15 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
               <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
                 {stats.elPina ? (
                   <>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Participante</span>
-                      <span className="text-base font-extrabold text-foreground">{stats.elPina.participantName}</span>
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        {stats.elPina.participantNames.length > 1 ? 'Participantes' : 'Participante'}
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.elPina.participantNames)}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Partidos en Blanco</span>
-                      <span className="text-xl font-black text-yellow-400">{stats.elPina.count} errados</span>
+                      <span className="text-base font-black text-yellow-400">{stats.elPina.count} {stats.elPina.count === 1 ? 'errado' : 'errados'}</span>
                     </div>
                   </>
                 ) : (
@@ -210,7 +225,7 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 
                 <div className="space-y-2">
                   <h3 className="text-lg font-black text-foreground group-hover:text-primary transition-colors">
-                    El Místico Nostradamus
+                    El Místico Nostradamus 🔮
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
                     Otorgado a quien acertó la mayor cantidad de empates exactos. Los empates son los pronósticos estadísticamente más complejos de clavar.
@@ -221,13 +236,15 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
               <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
                 {stats.nostradamus ? (
                   <>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Profeta</span>
-                      <span className="text-base font-extrabold text-foreground">{stats.nostradamus.participantName}</span>
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        {stats.nostradamus.participantNames.length > 1 ? 'Profetas' : 'Profeta'}
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.nostradamus.participantNames)}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Empates Clavados</span>
-                      <span className="text-xl font-black text-primary">{stats.nostradamus.count} empates</span>
+                      <span className="text-base font-black text-primary">{stats.nostradamus.count} {stats.nostradamus.count === 1 ? 'empate' : 'empates'}</span>
                     </div>
                   </>
                 ) : (
@@ -261,14 +278,100 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
               <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
                 {stats.reyDeLaFase ? (
                   <>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Líder Absoluto</span>
-                      <span className="text-base font-extrabold text-foreground">{stats.reyDeLaFase.participantName}</span>
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        {stats.reyDeLaFase.participantNames.length > 1 ? 'Líderes Absolutos' : 'Líder Absoluto'}
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.reyDeLaFase.participantNames)}</span>
                       <span className="text-[9px] text-slate-400 mt-0.5">En: {stats.reyDeLaFase.phase}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Puntos de Fase</span>
-                      <span className="text-xl font-black text-emerald-400">{stats.reyDeLaFase.points} pts</span>
+                      <span className="text-base font-black text-emerald-400">{stats.reyDeLaFase.points} pts</span>
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-500 font-semibold italic text-center w-full">Aún sin ganadores</span>
+                )}
+              </div>
+            </div>
+
+            {/* 5. EL AMARRETE DEL GRUPO (🛡️) */}
+            <div className="glass border border-border p-6 rounded-3xl flex flex-col justify-between gap-6 soccer-glow relative overflow-hidden group hover:scale-[1.02] transition-transform">
+              <div className="absolute top-[-20%] right-[-10%] w-[120px] h-[120px] rounded-full bg-cyan-500/5 blur-[30px] -z-10 group-hover:bg-cyan-500/10 transition-colors" />
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <span className="text-3xl">🛡️</span>
+                  <span className="text-[10px] font-black tracking-wider uppercase bg-cyan-500/15 text-cyan-450 px-2.5 py-1 rounded-full border border-cyan-500/25">
+                    Rey del Antifútbol
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-black text-foreground group-hover:text-cyan-400 transition-colors">
+                    El Amarrete del Grupo 🛡️
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Para quien predijo la mayor cantidad de partidos con marcadores ultra-defensivos (0-0, 1-0, 0-1). ¡Asegurando el arco en cero antes del espectáculo!
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+                {stats.elAmarrete ? (
+                  <>
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        {stats.elAmarrete.participantNames.length > 1 ? 'Especuladores' : 'Especulador'}
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.elAmarrete.participantNames)}</span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Preds Tacañas</span>
+                      <span className="text-base font-black text-cyan-450">{stats.elAmarrete.count} marcadores</span>
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-500 font-semibold italic text-center w-full">Aún sin ganadores</span>
+                )}
+              </div>
+            </div>
+
+            {/* 6. EL OPTIMISTA DEL GOL (🚀) */}
+            <div className="glass border border-border p-6 rounded-3xl flex flex-col justify-between gap-6 soccer-glow relative overflow-hidden group hover:scale-[1.02] transition-transform">
+              <div className="absolute top-[-20%] right-[-10%] w-[120px] h-[120px] rounded-full bg-pink-500/5 blur-[30px] -z-10 group-hover:bg-pink-500/10 transition-colors" />
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <span className="text-3xl">🚀</span>
+                  <span className="text-[10px] font-black tracking-wider uppercase bg-pink-500/15 text-pink-400 px-2.5 py-1 rounded-full border border-pink-500/25">
+                    Rey del Show
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-black text-foreground group-hover:text-pink-400 transition-colors">
+                    El Optimista del Gol 🚀
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Premio al participante que colocó la mayor cantidad total de goles predichos en su cartilla completa. ¡Quieren ver redes infladas!
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+                {stats.elOptimista ? (
+                  <>
+                    <div className="flex flex-col max-w-[65%]">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                        {stats.elOptimista.participantNames.length > 1 ? 'Optimistas' : 'Optimista'}
+                      </span>
+                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.elOptimista.participantNames)}</span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Goles Totales</span>
+                      <span className="text-base font-black text-pink-400">{stats.elOptimista.count} goles</span>
                     </div>
                   </>
                 ) : (
@@ -291,7 +394,7 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 ¡La Grada está calentando motores! 📣⚽
               </h2>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Las estadísticas divertidas de la polla y los trofeos (como el afamado 🍍 **El Piña** o el galardonado 🏆 **Pulpo Paul**) se habilitarán automáticamente tan pronto como comience el mundial y finalice el primer partido real.
+                Las estadísticas de la polla y los trofeos (como el afamado 🍍 **El Piña** o el galardonado 🔮 **El Oráculo del Gol**) se habilitarán automáticamente tan pronto como comience el mundial y finalice el primer partido real.
               </p>
             </div>
 

@@ -472,7 +472,7 @@ export const StatsService = {
     // 1. Obtener participantes de la polla
     const participants = await PollaService.getParticipants(pollaId);
     if (participants.length === 0) {
-      return { pulpoPaul: null, elPina: null, nostradamus: null, reyDeLaFase: null };
+      return { oraculoDelGol: null, elPina: null, nostradamus: null, reyDeLaFase: null, elAmarrete: null, elOptimista: null };
     }
     
     // Obtener predicciones y brackets
@@ -502,36 +502,36 @@ export const StatsService = {
       matches = db.matches;
     }
     
-    // A. 🏆 El Pulpo Paul (Más aciertos exactos)
-    let pulpo: { participantName: string; count: number } | null = null;
-    const pulpoCounts = participants.map((p: Participant) => ({
-      participantName: p.name,
+    // A. 🏆 El Oráculo del Gol (Más aciertos exactos) - Soporta empates
+    let oraculo: { participantNames: string[]; count: number } | null = null;
+    const oraculoCounts = participants.map((p: Participant) => ({
+      name: p.name,
       count: p.exact_matches
-    })).sort((a: { count: number }, b: { count: number }) => b.count - a.count);
-    
-    if (pulpoCounts.length > 0 && pulpoCounts[0].count > 0) {
-      pulpo = pulpoCounts[0];
+    }));
+    const maxExact = oraculoCounts.length > 0 ? Math.max(...oraculoCounts.map(c => c.count)) : 0;
+    if (maxExact > 0) {
+      const winners = oraculoCounts.filter(c => c.count === maxExact).map(c => c.name);
+      oraculo = { participantNames: winners, count: maxExact };
     }
     
-    // B. 🍍 El Piña (Más partidos errados por completo - partidos finalizados donde predijo y sacó 0 puntos)
-    let pina: { participantName: string; count: number } | null = null;
+    // B. 🍍 El Piña (Más partidos errados por completo - partidos finalizados donde predijo y sacó 0 puntos) - Soporta empates
+    let pina: { participantNames: string[]; count: number } | null = null;
     const finishedMatchIds = matches.filter((m: Match) => m.status === 'FINISHED').map((m: Match) => m.id);
-    
-    const pinaCounts = participants.map((p: Participant) => {
-      const userPreds = allPreds.filter((pr: Prediction) => pr.participant_id === p.id && finishedMatchIds.includes(pr.match_id));
-      const zeroPointsCount = userPreds.filter((pr: Prediction) => pr.points_won === 0).length;
-      return {
-        participantName: p.name,
-        count: zeroPointsCount
-      };
-    }).sort((a: { count: number }, b: { count: number }) => b.count - a.count);
-    
-    if (pinaCounts.length > 0 && pinaCounts[0].count > 0) {
-      pina = pinaCounts[0];
+    if (finishedMatchIds.length > 0) {
+      const pinaCounts = participants.map((p: Participant) => {
+        const userPreds = allPreds.filter((pr: Prediction) => pr.participant_id === p.id && finishedMatchIds.includes(pr.match_id));
+        const zeroPointsCount = userPreds.filter((pr: Prediction) => pr.points_won === 0).length;
+        return { name: p.name, count: zeroPointsCount };
+      });
+      const maxZero = pinaCounts.length > 0 ? Math.max(...pinaCounts.map(c => c.count)) : 0;
+      if (maxZero > 0) {
+        const winners = pinaCounts.filter(c => c.count === maxZero).map(c => c.name);
+        pina = { participantNames: winners, count: maxZero };
+      }
     }
     
-    // C. 🔮 El Nostradamus (Mayor cantidad de predicciones de empates acertadas, muy difíciles de acertar)
-    let nostradamus: { participantName: string; count: number } | null = null;
+    // C. 🔮 El Nostradamus (Mayor cantidad de predicciones de empates acertadas) - Soporta empates
+    let nostradamus: { participantNames: string[]; count: number } | null = null;
     const nostradamusCounts = participants.map((p: Participant) => {
       const exactDraws = allPreds.filter((pr: Prediction) => 
         pr.participant_id === p.id && 
@@ -539,19 +539,16 @@ export const StatsService = {
         pr.points_won > 0 && 
         pr.home_score === pr.away_score
       ).length;
-      
-      return {
-        participantName: p.name,
-        count: exactDraws
-      };
-    }).sort((a: { count: number }, b: { count: number }) => b.count - a.count);
-    
-    if (nostradamusCounts.length > 0 && nostradamusCounts[0].count > 0) {
-      nostradamus = nostradamusCounts[0];
+      return { name: p.name, count: exactDraws };
+    });
+    const maxDraws = nostradamusCounts.length > 0 ? Math.max(...nostradamusCounts.map(c => c.count)) : 0;
+    if (maxDraws > 0) {
+      const winners = nostradamusCounts.filter(c => c.count === maxDraws).map(c => c.name);
+      nostradamus = { participantNames: winners, count: maxDraws };
     }
     
-    // D. 🔥 El Rey de la Fase (Mayor cantidad de puntos en Fase de Grupos vs Eliminatorias)
-    let rey: { participantName: string; phase: string; points: number } | null = null;
+    // D. 🔥 El Rey de la Fase (Mayor cantidad de puntos en Fase de Grupos vs Eliminatorias) - Soporta empates
+    let rey: { participantNames: string[]; phase: string; points: number } | null = null;
     const finishedGroupMatchIds = matches.filter((m: Match) => m.status === 'FINISHED' && m.stage === 'GROUPS').map((m: Match) => m.id);
     
     const reyCandidates = participants.map((p: Participant) => {
@@ -576,29 +573,55 @@ export const StatsService = {
       };
     });
     
-    let maxGroup = { name: '', points: -1 };
-    let maxElim = { name: '', points: -1 };
+    const maxGroupPoints = reyCandidates.length > 0 ? Math.max(...reyCandidates.map(c => c.groupPoints)) : 0;
+    const maxElimPoints = reyCandidates.length > 0 ? Math.max(...reyCandidates.map(c => c.elimPoints)) : 0;
     
-    reyCandidates.forEach((cand: { name: string; groupPoints: number; elimPoints: number }) => {
-      if (cand.groupPoints > maxGroup.points) {
-        maxGroup = { name: cand.name, points: cand.groupPoints };
-      }
-      if (cand.elimPoints > maxElim.points) {
-        maxElim = { name: cand.name, points: cand.elimPoints };
-      }
+    if (maxGroupPoints >= maxElimPoints && maxGroupPoints > 0) {
+      const winners = reyCandidates.filter(c => c.groupPoints === maxGroupPoints).map(c => c.name);
+      rey = { participantNames: winners, phase: 'Fase de Grupos', points: maxGroupPoints };
+    } else if (maxElimPoints > 0) {
+      const winners = reyCandidates.filter(c => c.elimPoints === maxElimPoints).map(c => c.name);
+      rey = { participantNames: winners, phase: 'Fases Eliminatorias', points: maxElimPoints };
+    }
+    
+    // E. 🛡️ El Amarrete (Quien predijo más veces marcadores defensivos: 0-0, 1-0, 0-1) - Soporta empates
+    let amarrete: { participantNames: string[]; count: number } | null = null;
+    const amarreteCounts = participants.map((p: Participant) => {
+      const count = allPreds.filter((pr: Prediction) => 
+        pr.participant_id === p.id && 
+        ((pr.home_score === 0 && pr.away_score === 0) || 
+         (pr.home_score === 1 && pr.away_score === 0) || 
+         (pr.home_score === 0 && pr.away_score === 1))
+      ).length;
+      return { name: p.name, count };
     });
-    
-    if (maxGroup.points >= maxElim.points && maxGroup.points > 0) {
-      rey = { participantName: maxGroup.name, phase: 'Fase de Grupos', points: maxGroup.points };
-    } else if (maxElim.points > 0) {
-      rey = { participantName: maxElim.name, phase: 'Fases Eliminatorias', points: maxElim.points };
+    const maxAmarrete = amarreteCounts.length > 0 ? Math.max(...amarreteCounts.map(c => c.count)) : 0;
+    if (maxAmarrete > 0) {
+      const winners = amarreteCounts.filter(c => c.count === maxAmarrete).map(c => c.name);
+      amarrete = { participantNames: winners, count: maxAmarrete };
+    }
+
+    // F. 🚀 El Optimista del Gol (Quien predijo la mayor suma total de goles) - Soporta empates
+    let optimista: { participantNames: string[]; count: number } | null = null;
+    const optimistaCounts = participants.map((p: Participant) => {
+      const totalGoles = allPreds
+        .filter((pr: Prediction) => pr.participant_id === p.id)
+        .reduce((sum, pr) => sum + pr.home_score + pr.away_score, 0);
+      return { name: p.name, count: totalGoles };
+    });
+    const maxOptimista = optimistaCounts.length > 0 ? Math.max(...optimistaCounts.map(c => c.count)) : 0;
+    if (maxOptimista > 0) {
+      const winners = optimistaCounts.filter(c => c.count === maxOptimista).map(c => c.name);
+      optimista = { participantNames: winners, count: maxOptimista };
     }
     
     return {
-      pulpoPaul: pulpo,
+      oraculoDelGol: oraculo,
       elPina: pina,
       nostradamus: nostradamus,
-      reyDeLaFase: rey
+      reyDeLaFase: rey,
+      elAmarrete: amarrete,
+      elOptimista: optimista
     };
   }
 };

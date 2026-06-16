@@ -71,8 +71,10 @@ export interface BracketPrediction {
 
 // Interfaz para las estadísticas de "La Grada"
 export interface FunStats {
-  pulpoPaul: { participantName: string; count: number; avatar?: string } | null; // Más plenos (marcador exacto)
-  elPina: { participantName: string; count: number; avatar?: string } | null; // Más partidos errados por completo (mala suerte) 🍍
-  nostradamus: { participantName: string; count: number; avatar?: string } | null; // Mayor cantidad de sorpresas acertadas
-  reyDeLaFase: { participantName: string; phase: string; points: number } | null; // Mejor puntaje en fase de grupos vs eliminación
+  oraculoDelGol: { participantNames: string[]; count: number } | null; // Más plenos (marcador exacto)
+  elPina: { participantNames: string[]; count: number } | null; // Más partidos errados por completo (mala suerte) 🍍
+  nostradamus: { participantNames: string[]; count: number } | null; // Mayor cantidad de empates clavados
+  reyDeLaFase: { participantNames: string[]; phase: string; points: number } | null; // Mejor puntaje en fase de grupos vs eliminación
+  elAmarrete: { participantNames: string[]; count: number } | null; // Más partidos con marcadores defensivos (0-0, 1-0, 0-1)
+  elOptimista: { participantNames: string[]; count: number } | null; // Mayor suma de goles pronosticados en total
 }
