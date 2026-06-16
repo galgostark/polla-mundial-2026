@@ -149,16 +149,16 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4 gap-4">
                 {stats.oraculoDelGol ? (
                   <>
-                    <div className="flex flex-col max-w-[65%]">
+                    <div className="flex flex-col flex-1 min-w-0 text-left">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {stats.oraculoDelGol.participantNames.length > 1 ? 'Líderes' : 'Líder'}
                       </span>
-                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.oraculoDelGol.participantNames)}</span>
+                      <span className="text-sm font-extrabold text-foreground break-words leading-tight">{formatWinners(stats.oraculoDelGol.participantNames)}</span>
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-right flex-shrink-0">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plenos</span>
                       <span className="text-base font-black text-accent">{stats.oraculoDelGol.count} {stats.oraculoDelGol.count === 1 ? 'acierto' : 'aciertos'}</span>
                     </div>
@@ -191,16 +191,16 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4 gap-4">
                 {stats.elPina ? (
                   <>
-                    <div className="flex flex-col max-w-[65%]">
+                    <div className="flex flex-col flex-1 min-w-0 text-left">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {stats.elPina.participantNames.length > 1 ? 'Participantes' : 'Participante'}
                       </span>
-                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.elPina.participantNames)}</span>
+                      <span className="text-sm font-extrabold text-foreground break-words leading-tight">{formatWinners(stats.elPina.participantNames)}</span>
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-right flex-shrink-0">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Partidos en Blanco</span>
                       <span className="text-base font-black text-yellow-400">{stats.elPina.count} {stats.elPina.count === 1 ? 'errado' : 'errados'}</span>
                     </div>
@@ -233,16 +233,16 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4 gap-4">
                 {stats.nostradamus ? (
                   <>
-                    <div className="flex flex-col max-w-[65%]">
+                    <div className="flex flex-col flex-1 min-w-0 text-left">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {stats.nostradamus.participantNames.length > 1 ? 'Profetas' : 'Profeta'}
                       </span>
-                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.nostradamus.participantNames)}</span>
+                      <span className="text-sm font-extrabold text-foreground break-words leading-tight">{formatWinners(stats.nostradamus.participantNames)}</span>
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-right flex-shrink-0">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Empates Clavados</span>
                       <span className="text-base font-black text-primary">{stats.nostradamus.count} {stats.nostradamus.count === 1 ? 'empate' : 'empates'}</span>
                     </div>
@@ -275,17 +275,17 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4 gap-4">
                 {stats.reyDeLaFase ? (
                   <>
-                    <div className="flex flex-col max-w-[65%]">
+                    <div className="flex flex-col flex-1 min-w-0 text-left">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {stats.reyDeLaFase.participantNames.length > 1 ? 'Líderes Absolutos' : 'Líder Absoluto'}
                       </span>
-                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.reyDeLaFase.participantNames)}</span>
+                      <span className="text-sm font-extrabold text-foreground break-words leading-tight">{formatWinners(stats.reyDeLaFase.participantNames)}</span>
                       <span className="text-[9px] text-slate-400 mt-0.5">En: {stats.reyDeLaFase.phase}</span>
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-right flex-shrink-0">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Puntos de Fase</span>
                       <span className="text-base font-black text-emerald-400">{stats.reyDeLaFase.points} pts</span>
                     </div>
@@ -318,16 +318,16 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4 gap-4">
                 {stats.elAmarrete ? (
                   <>
-                    <div className="flex flex-col max-w-[65%]">
+                    <div className="flex flex-col flex-1 min-w-0 text-left">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {stats.elAmarrete.participantNames.length > 1 ? 'Especuladores' : 'Especulador'}
                       </span>
-                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.elAmarrete.participantNames)}</span>
+                      <span className="text-sm font-extrabold text-foreground break-words leading-tight">{formatWinners(stats.elAmarrete.participantNames)}</span>
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-right flex-shrink-0">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Preds Tacañas</span>
                       <span className="text-base font-black text-cyan-450">{stats.elAmarrete.count} marcadores</span>
                     </div>
@@ -360,16 +360,16 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4">
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex items-center justify-between mt-4 gap-4">
                 {stats.elOptimista ? (
                   <>
-                    <div className="flex flex-col max-w-[65%]">
+                    <div className="flex flex-col flex-1 min-w-0 text-left">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         {stats.elOptimista.participantNames.length > 1 ? 'Optimistas' : 'Optimista'}
                       </span>
-                      <span className="text-sm font-extrabold text-foreground truncate break-words">{formatWinners(stats.elOptimista.participantNames)}</span>
+                      <span className="text-sm font-extrabold text-foreground break-words leading-tight">{formatWinners(stats.elOptimista.participantNames)}</span>
                     </div>
-                    <div className="flex flex-col text-right">
+                    <div className="flex flex-col text-right flex-shrink-0">
                       <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Goles Totales</span>
                       <span className="text-base font-black text-pink-400">{stats.elOptimista.count} goles</span>
                     </div>
