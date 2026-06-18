@@ -92,7 +92,9 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
     stats.nostradamus !== null || 
     stats.reyDeLaFase !== null ||
     stats.elAmarrete !== null ||
-    stats.elOptimista !== null
+    stats.elOptimista !== null ||
+    stats.alineacionPlanetaria !== null ||
+    stats.laEstafaColectiva !== null
   );
 
   return (
@@ -376,6 +378,100 @@ export default function EstadisticasGradaPage({ params }: PageProps) {
                   </>
                 ) : (
                   <span className="text-xs text-slate-500 font-semibold italic text-center w-full">Aún sin ganadores</span>
+                )}
+              </div>
+            </div>
+
+            {/* 7. ALINEACIÓN PLANETARIA (🪐) */}
+            <div className="glass border border-border p-6 rounded-3xl flex flex-col justify-between gap-6 soccer-glow relative overflow-hidden group hover:scale-[1.02] transition-transform">
+              <div className="absolute top-[-20%] right-[-10%] w-[120px] h-[120px] rounded-full bg-emerald-500/5 blur-[30px] -z-10 group-hover:bg-emerald-500/10 transition-colors" />
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <span className="text-3xl">🪐</span>
+                  <span className="text-[10px] font-black tracking-wider uppercase bg-emerald-500/15 text-emerald-450 px-2.5 py-1 rounded-full border border-emerald-500/25">
+                    Milagro Colectivo
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-black text-foreground group-hover:text-emerald-450 transition-colors">
+                    Alineación Planetaria 🪐
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Partidos mágicos donde absolutamente todos los participantes sumaron puntos. ¡La grada estuvo de fiesta!
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex flex-col mt-4 gap-2">
+                {stats.alineacionPlanetaria ? (
+                  <>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider text-left">
+                      Partidos Clave
+                    </span>
+                    <div className="max-h-[120px] overflow-y-auto pr-1 flex flex-col gap-2 custom-scrollbar">
+                      {stats.alineacionPlanetaria.map((m) => (
+                        <div key={m.id} className="flex justify-between items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-900 text-xs">
+                          <span className="truncate font-semibold text-slate-200">
+                            {m.home_team?.name} vs {m.away_team?.name}
+                          </span>
+                          <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-500/20 font-black">
+                            {m.home_score} - {m.away_score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-500 font-semibold italic text-center py-2 w-full">Aún sin partidos</span>
+                )}
+              </div>
+            </div>
+
+            {/* 8. LA ESTAFA COLECTIVA (🤡) */}
+            <div className="glass border border-border p-6 rounded-3xl flex flex-col justify-between gap-6 soccer-glow relative overflow-hidden group hover:scale-[1.02] transition-transform">
+              <div className="absolute top-[-20%] right-[-10%] w-[120px] h-[120px] rounded-full bg-rose-500/5 blur-[30px] -z-10 group-hover:bg-rose-500/10 transition-colors" />
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <span className="text-3xl">🤡</span>
+                  <span className="text-[10px] font-black tracking-wider uppercase bg-rose-500/15 text-rose-450 px-2.5 py-1 rounded-full border border-rose-500/25">
+                    Cero Absoluto
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-black text-foreground group-hover:text-rose-400 transition-colors">
+                    La Estafa Colectiva 🤡
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Partidos fatídicos en los que absolutamente nadie del grupo sumó un solo punto. ¡O jugaron horrible o nos estafaron!
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-850 flex flex-col mt-4 gap-2">
+                {stats.laEstafaColectiva ? (
+                  <>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider text-left">
+                      Partidos Fatídicos
+                    </span>
+                    <div className="max-h-[120px] overflow-y-auto pr-1 flex flex-col gap-2 custom-scrollbar">
+                      {stats.laEstafaColectiva.map((m) => (
+                        <div key={m.id} className="flex justify-between items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-900 text-xs">
+                          <span className="truncate font-semibold text-slate-200">
+                            {m.home_team?.name} vs {m.away_team?.name}
+                          </span>
+                          <span className="text-[10px] bg-rose-500/15 text-rose-400 px-2 py-0.5 rounded-lg border border-rose-500/20 font-black">
+                            {m.home_score} - {m.away_score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-500 font-semibold italic text-center py-2 w-full">Aún sin partidos</span>
                 )}
               </div>
             </div>

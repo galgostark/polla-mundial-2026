@@ -472,7 +472,16 @@ export const StatsService = {
     // 1. Obtener participantes de la polla
     const participants = await PollaService.getParticipants(pollaId);
     if (participants.length === 0) {
-      return { oraculoDelGol: null, elPina: null, nostradamus: null, reyDeLaFase: null, elAmarrete: null, elOptimista: null };
+      return { 
+        oraculoDelGol: null, 
+        elPina: null, 
+        nostradamus: null, 
+        reyDeLaFase: null, 
+        elAmarrete: null, 
+        elOptimista: null,
+        alineacionPlanetaria: null,
+        laEstafaColectiva: null
+      };
     }
     
     // Obtener predicciones y brackets
@@ -615,13 +624,50 @@ export const StatsService = {
       optimista = { participantNames: winners, count: maxOptimista };
     }
     
+    // G. 🪐 Alineación Planetaria (Partidos donde todos los usuarios sumaron puntos > 0)
+    // H. 🤡 La Estafa Colectiva (Partidos donde nadie sumó puntos)
+    const alineacionPlanetariaMatches: Match[] = [];
+    const laEstafaColectivaMatches: Match[] = [];
+
+    if (finishedMatchIds.length > 0 && participants.length > 0) {
+      finishedMatchIds.forEach((matchId) => {
+        const matchPreds = allPreds.filter((pr: Prediction) => pr.match_id === matchId);
+        
+        if (matchPreds.length > 0) {
+          let scorersCount = 0;
+          let zeroPointsCount = 0;
+          
+          participants.forEach((p: Participant) => {
+            const pred = matchPreds.find((pr: Prediction) => pr.participant_id === p.id);
+            if (pred && pred.points_won !== null && pred.points_won > 0) {
+              scorersCount++;
+            } else {
+              zeroPointsCount++;
+            }
+          });
+          
+          const matchObj = matches.find((m: Match) => m.id === matchId);
+          if (matchObj) {
+            if (scorersCount === participants.length) {
+              alineacionPlanetariaMatches.push(matchObj);
+            }
+            if (zeroPointsCount === participants.length) {
+              laEstafaColectivaMatches.push(matchObj);
+            }
+          }
+        }
+      });
+    }
+
     return {
       oraculoDelGol: oraculo,
       elPina: pina,
       nostradamus: nostradamus,
       reyDeLaFase: rey,
       elAmarrete: amarrete,
-      elOptimista: optimista
+      elOptimista: optimista,
+      alineacionPlanetaria: alineacionPlanetariaMatches.length > 0 ? alineacionPlanetariaMatches : null,
+      laEstafaColectiva: laEstafaColectivaMatches.length > 0 ? laEstafaColectivaMatches : null
     };
   }
 };

@@ -77,4 +77,6 @@ export interface FunStats {
   reyDeLaFase: { participantNames: string[]; phase: string; points: number } | null; // Mejor puntaje en fase de grupos vs eliminación
   elAmarrete: { participantNames: string[]; count: number } | null; // Más partidos con marcadores defensivos (0-0, 1-0, 0-1)
   elOptimista: { participantNames: string[]; count: number } | null; // Mayor suma de goles pronosticados en total
+  alineacionPlanetaria: Match[] | null; // Partidos donde todos sumaron puntos
+  laEstafaColectiva: Match[] | null; // Partidos donde nadie sumó puntos
 }
