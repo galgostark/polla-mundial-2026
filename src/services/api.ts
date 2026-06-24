@@ -93,6 +93,13 @@ const recalculateLocalBrackets = (pollaId: string) => {
     if (!part) return bp;
     
     let pts = 0;
+
+    // Dieciseisavos (R32): 1 pt por equipo acertado
+    if (bp.round_of_32 && r32Teams.length > 0) {
+      bp.round_of_32.forEach((t: string) => {
+        if (r32Teams.includes(t)) pts += 1;
+      });
+    }
     
     // Octavos (R16): 2 pts por equipo acertado
     if (bp.round_of_16 && r16Teams.length > 0) {
@@ -148,6 +155,199 @@ const recalculateLocalBrackets = (pollaId: string) => {
   
   db.participants = updatedParticipants;
   saveLocalDb({ participants: updatedParticipants });
+};
+
+// Algoritmo para derivar el cuadro (brackets) a partir de los pronósticos de marcadores
+export const calculateDerivedBracket = (
+  allPreds: Prediction[],
+  matches: Match[],
+  teams: Team[]
+): Partial<BracketPrediction> => {
+  // 1. Obtener predicciones de fase de grupos
+  const groupMatches = matches.filter(m => m.stage === 'GROUPS');
+  
+  // Agrupar equipos por su letra de grupo
+  const groups: Record<string, Team[]> = {};
+  teams.forEach(t => {
+    if (!groups[t.group_letter]) groups[t.group_letter] = [];
+    groups[t.group_letter].push(t);
+  });
+  
+  const groupStandings: Record<string, { teamId: string; pts: number; gd: number; gs: number }[]> = {};
+  
+  Object.keys(groups).forEach(letter => {
+    const groupTeams = groups[letter];
+    const groupMatchIds = groupMatches
+      .filter(m => m.home_team_id && groupTeams.some(gt => gt.id === m.home_team_id))
+      .map(m => m.id);
+      
+    // Inicializar standings para este grupo
+    const standings = groupTeams.map(t => ({
+      teamId: t.id,
+      pts: 0,
+      gd: 0,
+      gs: 0
+    }));
+    
+    // Procesar predicciones de este participante para este grupo
+    allPreds.forEach(pred => {
+      if (groupMatchIds.includes(pred.match_id)) {
+        const match = groupMatches.find(m => m.id === pred.match_id);
+        if (!match) return;
+        
+        const homeId = match.home_team_id!;
+        const awayId = match.away_team_id!;
+        
+        const homeS = pred.home_score;
+        const awayS = pred.away_score;
+        
+        const homeRow = standings.find(r => r.teamId === homeId);
+        const awayRow = standings.find(r => r.teamId === awayId);
+        
+        if (homeRow && awayRow) {
+          homeRow.gs += homeS;
+          awayRow.gs += awayS;
+          homeRow.gd += (homeS - awayS);
+          awayRow.gd += (awayS - homeS);
+          
+          if (homeS > awayS) {
+            homeRow.pts += 3;
+          } else if (homeS < awayS) {
+            awayRow.pts += 3;
+          } else {
+            homeRow.pts += 1;
+            awayRow.pts += 1;
+          }
+        }
+      }
+    });
+    
+    // Ordenar standings
+    standings.sort((a, b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if (b.gd !== a.gd) return b.gd - a.gd;
+      if (b.gs !== a.gs) return b.gs - a.gs;
+      return a.teamId.localeCompare(b.teamId);
+    });
+    
+    groupStandings[letter] = standings;
+  });
+  
+  // 2. Clasificados a dieciseisavos (Round of 32)
+  const firsts: string[] = [];
+  const seconds: string[] = [];
+  const thirds: { teamId: string; pts: number; gd: number; gs: number }[] = [];
+  
+  Object.keys(groupStandings).forEach(letter => {
+    const standings = groupStandings[letter];
+    if (standings.length >= 1) firsts.push(standings[0].teamId);
+    if (standings.length >= 2) seconds.push(standings[1].teamId);
+    if (standings.length >= 3) thirds.push(standings[2]);
+  });
+  
+  // Ordenar los terceros lugares
+  thirds.sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.gd !== a.gd) return b.gd - a.gd;
+    if (b.gs !== a.gs) return b.gs - a.gs;
+    return a.teamId.localeCompare(b.teamId);
+  });
+  
+  const bestThirds = thirds.slice(0, 8).map(t => t.teamId);
+  const roundOf32 = [...firsts, ...seconds, ...bestThirds];
+  
+  // 3. Resolver ganadores de playoffs
+  
+  // Helper para resolver ganador de un partido por su ID
+  const getPredictedWinner = (matchId: number): string | null => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match || !match.home_team_id || !match.away_team_id) return null;
+    
+    const pred = allPreds.find(p => p.match_id === matchId);
+    if (!pred) return null;
+    
+    if (pred.home_score > pred.away_score) {
+      return match.home_team_id;
+    } else if (pred.home_score < pred.away_score) {
+      return match.away_team_id;
+    } else {
+      // Si hay empate, por defecto pasa el local (para tener un clasificado)
+      return match.home_team_id;
+    }
+  };
+  
+  // Ronda de 16: ganadores de los partidos 73 al 88
+  const roundOf16: string[] = [];
+  for (let id = 73; id <= 88; id++) {
+    const winner = getPredictedWinner(id);
+    if (winner) roundOf16.push(winner);
+  }
+  
+  // Cuartos: ganadores de los partidos 89 al 96
+  const quarterfinalists: string[] = [];
+  for (let id = 89; id <= 96; id++) {
+    const winner = getPredictedWinner(id);
+    if (winner) quarterfinalists.push(winner);
+  }
+  
+  // Semis: ganadores de los partidos 97 al 100
+  const semifinalists: string[] = [];
+  for (let id = 97; id <= 100; id++) {
+    const winner = getPredictedWinner(id);
+    if (winner) semifinalists.push(winner);
+  }
+  
+  // Campeón y Subcampeón: del partido 104 (Final)
+  let champion_team_id: string | null = null;
+  let runner_up_team_id: string | null = null;
+  
+  const finalMatch = matches.find(m => m.id === 104);
+  if (finalMatch && finalMatch.home_team_id && finalMatch.away_team_id) {
+    const finalPred = allPreds.find(p => p.match_id === 104);
+    if (finalPred) {
+      if (finalPred.home_score >= finalPred.away_score) {
+        champion_team_id = finalMatch.home_team_id;
+        runner_up_team_id = finalMatch.away_team_id;
+      } else {
+        champion_team_id = finalMatch.away_team_id;
+        runner_up_team_id = finalMatch.home_team_id;
+      }
+    }
+  }
+  
+  return {
+    round_of_32: roundOf32,
+    round_of_16: roundOf16,
+    quarterfinalists: quarterfinalists,
+    semifinalists: semifinalists,
+    champion_team_id,
+    runner_up_team_id
+  };
+};
+
+// Recalcular y guardar el bracket derivado del participante
+export const recalculateParticipantDerivedBracket = async (participantId: string, pollaId: string): Promise<void> => {
+  // 1. Obtener todas las predicciones del participante
+  const preds = await PredictionsService.getPredictions(participantId);
+  // 2. Obtener fixture completo y equipos
+  const matches = await MatchesService.getMatches();
+  const teams = await MatchesService.getTeams();
+  
+  // 3. Calcular bracket derivado
+  const derived = calculateDerivedBracket(preds, matches, teams);
+  
+  // 4. Guardar bracket derivado
+  await PredictionsService.saveBracketPrediction(participantId, derived);
+  
+  // 5. Recalcular puntos
+  if (isSupabaseConfigured()) {
+    const { error } = await supabase.rpc('recalculate_bracket_predictions_points', { polla_uuid: pollaId });
+    if (error) {
+      console.error('Error recalculando puntos en Supabase:', error);
+    }
+  } else {
+    recalculateLocalBrackets(pollaId);
+  }
 };
 
 // ============================================
@@ -289,6 +489,7 @@ export const PredictionsService = {
 
   // 2. Guardar cartilla de predicciones
   savePredictions: async (participantId: string, list: { match_id: number; home_score: number; away_score: number }[]): Promise<void> => {
+    let pollaId = '';
     if (isSupabaseConfigured()) {
       const rows = list.map((item: { match_id: number; home_score: number; away_score: number }) => ({
         participant_id: participantId,
@@ -299,6 +500,9 @@ export const PredictionsService = {
       // UPSERT en Supabase
       const { error } = await supabase.from('predictions').upsert(rows, { onConflict: 'participant_id,match_id' });
       if (error) throw error;
+      
+      const { data } = await supabase.from('participants').select('polla_id').eq('id', participantId).single();
+      if (data) pollaId = data.polla_id;
     } else {
       const db = getLocalDb();
       
@@ -324,9 +528,15 @@ export const PredictionsService = {
           recalculateLocalPoints(m.id, m.home_score!, m.away_score!, 'FINISHED');
         }
       });
+      
+      const part = db.participants.find((p: Participant) => p.id === participantId);
+      if (part) pollaId = part.polla_id;
+    }
+    
+    if (pollaId) {
+      await recalculateParticipantDerivedBracket(participantId, pollaId);
     }
   },
-
   // 3. Obtener predicción del Bracket
   getBracketPrediction: async (participantId: string): Promise<BracketPrediction | null> => {
     if (isSupabaseConfigured()) {
@@ -422,6 +632,7 @@ export const MatchesService = {
 
   // 3. Registrar el resultado real de un partido (Admin)
   updateMatchResult: async (
+    pollaId: string,
     matchId: number, 
     homeScore: number, 
     awayScore: number, 
@@ -429,6 +640,7 @@ export const MatchesService = {
     homeTeamId?: string,
     awayTeamId?: string
   ): Promise<void> => {
+    // 1. Actualizar el partido en la DB
     if (isSupabaseConfigured()) {
       const updateData: any = { home_score: homeScore, away_score: awayScore, status };
       if (homeTeamId) updateData.home_team_id = homeTeamId;
@@ -454,17 +666,30 @@ export const MatchesService = {
       
       // Ejecutar motor de puntos local
       recalculateLocalPoints(matchId, homeScore, awayScore, status);
-      
-      // Si es un partido de brackets o final, disparar también el recálculo de brackets
-      const match = updated.find((m: Match) => m.id === matchId);
-      if (match && (match.stage !== 'GROUPS' || matchId === 104)) {
-        // Encontrar a qué pollas pertenecen los participantes afectados y recalcular sus brackets
-        const pollaIds = Array.from(new Set(db.participants.map((p: Participant) => p.polla_id)));
-        pollaIds.forEach((id: any) => recalculateLocalBrackets(id));
-      }
     }
-  }
-};
+
+    // 2. Obtener fixture completo y equipos actualizados para re-calcular los brackets de todos
+    const participants = await PollaService.getParticipants(pollaId);
+    const allMatches = await MatchesService.getMatches();
+    const allTeams = await MatchesService.getTeams();
+    
+    // 3. Recalcular y guardar el bracket derivado de cada participante
+    for (const p of participants) {
+      const pPreds = await PredictionsService.getPredictions(p.id);
+      const derived = calculateDerivedBracket(pPreds, allMatches, allTeams);
+      await PredictionsService.saveBracketPrediction(p.id, derived);
+    }
+
+    // 4. Recalcular los puntos de brackets de toda la polla
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase.rpc('recalculate_bracket_predictions_points', { polla_uuid: pollaId });
+      if (error) {
+        console.error('Error al recalcular puntos de brackets en Supabase:', error);
+      }
+    } else {
+      recalculateLocalBrackets(pollaId);
+    }
+  }};
 
 export const StatsService = {
   // Obtener las estadísticas divertidas para "La Grada"

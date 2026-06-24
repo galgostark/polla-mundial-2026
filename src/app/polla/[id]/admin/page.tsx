@@ -225,8 +225,8 @@ export default function AdminPanelPage({ params }: PageProps) {
     try {
       setErrorMsg('');
       setLoadingData(true);
-
       await MatchesService.updateMatchResult(
+        pollaId,
         matchId,
         parseInt(input.home),
         parseInt(input.away),
@@ -234,7 +234,6 @@ export default function AdminPanelPage({ params }: PageProps) {
         input.homeTeamId || undefined,
         input.awayTeamId || undefined
       );
-
       setSuccessMsg(`¡Partido #${matchId} cerrado y puntuado correctamente!`);
       setTimeout(() => setSuccessMsg(''), 4000);
       
