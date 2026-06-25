@@ -95,7 +95,6 @@ export default function PollaDashboardPage({ params }: PageProps) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   // Función para abrir modal y espiar cartilla de un amigo
   const handleInspect = async (part: Participant) => {
     try {
@@ -108,7 +107,15 @@ export default function PollaDashboardPage({ params }: PageProps) {
         MatchesService.getMatches()
       ]);
       
-      setInspectPredictions(preds);
+      // Ordenar predicciones cronológicamente conforme se juegan los partidos
+      const sortedPreds = [...preds].sort((a, b) => {
+        const matchA = matchesList.find(m => m.id === a.match_id);
+        const matchB = matchesList.find(m => m.id === b.match_id);
+        if (!matchA || !matchB) return a.match_id - b.match_id;
+        return new Date(matchA.match_date).getTime() - new Date(matchB.match_date).getTime();
+      });
+      
+      setInspectPredictions(sortedPreds);
       setInspectBracket(bracket);
       setInspectMatches(matchesList);
     } catch (err) {
@@ -117,7 +124,6 @@ export default function PollaDashboardPage({ params }: PageProps) {
       setLoadingInspection(false);
     }
   };
-
   // Exportar a Excel
   const exportToExcel = () => {
     if (participants.length === 0) return;
@@ -557,37 +563,43 @@ export default function PollaDashboardPage({ params }: PageProps) {
                       </div>
                     </div>
                   </div>
-
-                  {/* Detalle de Partidos Predichos (Fase de Grupos) */}
+                  {/* Detalle de Partidos Predichos (Grupos y Eliminatorias) */}
                   <div className="space-y-3">
                     <h4 className="text-sm font-black text-foreground">
-                      ⚽ Cartilla de Fase de Grupos
+                      ⚽ Cartilla de Predicciones
                     </h4>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {inspectPredictions.length > 0 ? (
                         inspectPredictions.map(pred => {
                           const match = inspectMatches.find(m => m.id === pred.match_id);
-                          if (!match || match.stage !== 'GROUPS') return null;
+                          if (!match) return null;
                           
                           // Puntos ganados en esta apuesta
                           let ptsBadge = null;
                           if (pred.points_won !== null) {
-                            if (pred.points_won === 4) ptsBadge = <span className="text-[9px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded">4 pts (Exacto!)</span>;
-                            else if (pred.points_won === 3) ptsBadge = <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/20 text-primary rounded">3 pts</span>;
-                            else ptsBadge = <span className="text-[9px] font-bold px-1.5 py-0.5 bg-destructive/10 text-destructive rounded">0 pts</span>;
+                            if (pred.points_won === 4) ptsBadge = <span className="text-[9px] font-bold px-1.5 py-0.5 bg-accent/20 text-accent rounded shrink-0">4 pts</span>;
+                            else if (pred.points_won === 3) ptsBadge = <span className="text-[9px] font-bold px-1.5 py-0.5 bg-primary/20 text-primary rounded shrink-0">3 pts</span>;
+                            else ptsBadge = <span className="text-[9px] font-bold px-1.5 py-0.5 bg-destructive/10 text-destructive rounded shrink-0">0 pts</span>;
                           }
 
                           return (
                             <div key={pred.id} className="p-3 bg-slate-950/60 border border-slate-900 rounded-xl flex items-center justify-between gap-3 text-xs">
-                              <span className="font-mono text-slate-500">#{pred.match_id}</span>
+                              <div className="flex flex-col text-left shrink-0">
+                                <span className="font-mono text-slate-500 font-bold">#{pred.match_id}</span>
+                                {match.stage !== 'GROUPS' && (
+                                  <span className="text-[7px] bg-slate-900 text-slate-400 font-extrabold px-1 py-0.5 rounded uppercase tracking-wider mt-0.5 block max-w-fit">
+                                    {match.stage === 'ROUND_32' ? 'R32' : match.stage === 'ROUND_16' ? 'R16' : match.stage}
+                                  </span>
+                                )}
+                              </div>
                               
-                              <div className="flex-1 flex items-center justify-between gap-2 px-1">
-                                <span className="font-extrabold text-slate-300 truncate text-right w-16">{match.home_team_id}</span>
-                                <span className="font-black bg-slate-900 px-2.5 py-1 rounded text-accent">
+                              <div className="flex-1 flex items-center justify-between gap-2 px-1 min-w-0">
+                                <span className="font-extrabold text-slate-300 truncate text-right w-16">{match.home_team_id || 'TBD'}</span>
+                                <span className="font-black bg-slate-900 px-2.5 py-1 rounded text-accent shrink-0">
                                   {pred.home_score} - {pred.away_score}
                                 </span>
-                                <span className="font-extrabold text-slate-300 truncate text-left w-16">{match.away_team_id}</span>
+                                <span className="font-extrabold text-slate-300 truncate text-left w-16">{match.away_team_id || 'TBD'}</span>
                               </div>
                               
                               {ptsBadge}
