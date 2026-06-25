@@ -88,23 +88,44 @@ export const generateMockMatches = (): Match[] => {
   }
   
   // B. RONDA DE 32 (16 partidos, del ID 73 al 88)
-  let playoffDate = new Date('2026-06-28T12:00:00-05:00');
-  for (let i = 73; i <= 88; i++) {
+  const r32Data = [
+    { id: 73, home: 'ZAF', away: 'CAN', date: '2026-06-28T14:00:00-05:00' },
+    { id: 74, home: 'MAR', away: null as string | null, date: '2026-06-29T20:00:00-05:00' },
+    { id: 75, home: 'GER', away: null as string | null, date: '2026-06-29T15:30:00-05:00' },
+    { id: 76, home: null as string | null, away: null as string | null, date: '2026-06-30T16:00:00-05:00' },
+    { id: 77, home: null as string | null, away: null as string | null, date: '2026-07-01T15:00:00-05:00' },
+    { id: 78, home: 'USA', away: null as string | null, date: '2026-07-01T19:00:00-05:00' },
+    { id: 79, home: null as string | null, away: null as string | null, date: '2026-07-02T14:00:00-05:00' },
+    { id: 80, home: null as string | null, away: null as string | null, date: '2026-07-02T18:00:00-05:00' },
+    { id: 81, home: 'BRA', away: null as string | null, date: '2026-06-29T12:00:00-05:00' },
+    { id: 82, home: null as string | null, away: null as string | null, date: '2026-06-30T12:00:00-05:00' },
+    { id: 83, home: 'MEX', away: null as string | null, date: '2026-06-30T20:00:00-05:00' },
+    { id: 84, home: null as string | null, away: null as string | null, date: '2026-07-01T11:00:00-05:00' },
+    { id: 85, home: 'SUI', away: null as string | null, date: '2026-07-02T22:00:00-05:00' },
+    { id: 86, home: null as string | null, away: null as string | null, date: '2026-07-03T20:30:00-05:00' },
+    { id: 87, home: null as string | null, away: null as string | null, date: '2026-07-03T13:00:00-05:00' },
+    { id: 88, home: 'ARG', away: null as string | null, date: '2026-07-03T17:00:00-05:00' },
+  ];
+
+  for (const match of r32Data) {
+    const homeT = match.home ? mockTeams.find(t => t.id === match.home) : undefined;
+    const awayT = match.away ? mockTeams.find(t => t.id === match.away) : undefined;
     matches.push({
-      id: i,
-      home_team_id: null,
-      away_team_id: null,
+      id: match.id,
+      home_team_id: match.home,
+      away_team_id: match.away,
       home_score: null,
       away_score: null,
       stage: 'ROUND_32',
-      match_date: playoffDate.toISOString(),
+      match_date: new Date(match.date).toISOString(),
       status: 'SCHEDULED',
+      home_team: homeT,
+      away_team: awayT
     });
-    playoffDate = new Date(playoffDate.getTime() + 6 * 60 * 60 * 1000);
   }
   
   // C. OCTAVOS DE FINAL (8 partidos, del ID 89 al 96)
-  playoffDate = new Date('2026-07-04T12:00:00-05:00');
+  let playoffDate = new Date('2026-07-04T12:00:00-05:00');
   for (let i = 89; i <= 96; i++) {
     matches.push({
       id: i,
