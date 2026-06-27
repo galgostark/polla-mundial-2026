@@ -93,7 +93,7 @@ export const generateMockMatches = (): Match[] => {
     { id: 74, home: 'NED', away: 'MAR', date: '2026-06-29T20:00:00-05:00' },
     { id: 75, home: 'GER', away: 'PAR', date: '2026-06-29T15:30:00-05:00' },
     { id: 76, home: 'FRA', away: 'SWE', date: '2026-06-30T16:00:00-05:00' },
-    { id: 77, home: null as string | null, away: null as string | null, date: '2026-07-01T15:00:00-05:00' },
+    { id: 77, home: 'BEL', away: null as string | null, date: '2026-07-01T15:00:00-05:00' },
     { id: 78, home: 'USA', away: 'BIH', date: '2026-07-01T19:00:00-05:00' },
     { id: 79, home: 'ESP', away: null as string | null, date: '2026-07-02T14:00:00-05:00' },
     { id: 80, home: null as string | null, away: null as string | null, date: '2026-07-02T18:00:00-05:00' },
@@ -103,7 +103,7 @@ export const generateMockMatches = (): Match[] => {
     { id: 84, home: null as string | null, away: null as string | null, date: '2026-07-01T11:00:00-05:00' },
     { id: 85, home: 'SUI', away: null as string | null, date: '2026-07-02T22:00:00-05:00' },
     { id: 86, home: null as string | null, away: null as string | null, date: '2026-07-03T20:30:00-05:00' },
-    { id: 87, home: 'AUS', away: null as string | null, date: '2026-07-03T13:00:00-05:00' },
+    { id: 87, home: 'AUS', away: 'EGY', date: '2026-07-03T13:00:00-05:00' },
     { id: 88, home: 'ARG', away: 'CPV', date: '2026-07-03T17:00:00-05:00' },
   ];
 
