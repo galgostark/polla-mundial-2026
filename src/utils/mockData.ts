@@ -90,21 +90,21 @@ export const generateMockMatches = (): Match[] => {
   // B. RONDA DE 32 (16 partidos, del ID 73 al 88)
   const r32Data = [
     { id: 73, home: 'ZAF', away: 'CAN', date: '2026-06-28T14:00:00-05:00' },
-    { id: 74, home: 'MAR', away: null as string | null, date: '2026-06-29T20:00:00-05:00' },
-    { id: 75, home: 'GER', away: null as string | null, date: '2026-06-29T15:30:00-05:00' },
-    { id: 76, home: null as string | null, away: null as string | null, date: '2026-06-30T16:00:00-05:00' },
+    { id: 74, home: 'NED', away: 'MAR', date: '2026-06-29T20:00:00-05:00' },
+    { id: 75, home: 'GER', away: 'PAR', date: '2026-06-29T15:30:00-05:00' },
+    { id: 76, home: 'FRA', away: 'SWE', date: '2026-06-30T16:00:00-05:00' },
     { id: 77, home: null as string | null, away: null as string | null, date: '2026-07-01T15:00:00-05:00' },
-    { id: 78, home: 'USA', away: null as string | null, date: '2026-07-01T19:00:00-05:00' },
-    { id: 79, home: null as string | null, away: null as string | null, date: '2026-07-02T14:00:00-05:00' },
+    { id: 78, home: 'USA', away: 'BIH', date: '2026-07-01T19:00:00-05:00' },
+    { id: 79, home: 'ESP', away: null as string | null, date: '2026-07-02T14:00:00-05:00' },
     { id: 80, home: null as string | null, away: null as string | null, date: '2026-07-02T18:00:00-05:00' },
-    { id: 81, home: 'BRA', away: null as string | null, date: '2026-06-29T12:00:00-05:00' },
-    { id: 82, home: null as string | null, away: null as string | null, date: '2026-06-30T12:00:00-05:00' },
+    { id: 81, home: 'BRA', away: 'JPN', date: '2026-06-29T12:00:00-05:00' },
+    { id: 82, home: 'CIV', away: 'NOR', date: '2026-06-30T12:00:00-05:00' },
     { id: 83, home: 'MEX', away: null as string | null, date: '2026-06-30T20:00:00-05:00' },
     { id: 84, home: null as string | null, away: null as string | null, date: '2026-07-01T11:00:00-05:00' },
     { id: 85, home: 'SUI', away: null as string | null, date: '2026-07-02T22:00:00-05:00' },
     { id: 86, home: null as string | null, away: null as string | null, date: '2026-07-03T20:30:00-05:00' },
-    { id: 87, home: null as string | null, away: null as string | null, date: '2026-07-03T13:00:00-05:00' },
-    { id: 88, home: 'ARG', away: null as string | null, date: '2026-07-03T17:00:00-05:00' },
+    { id: 87, home: 'AUS', away: null as string | null, date: '2026-07-03T13:00:00-05:00' },
+    { id: 88, home: 'ARG', away: 'CPV', date: '2026-07-03T17:00:00-05:00' },
   ];
 
   for (const match of r32Data) {
