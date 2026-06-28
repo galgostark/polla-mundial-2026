@@ -68,7 +68,7 @@ export default function AdminPanelPage({ params }: PageProps) {
 
   // Estados del Puntuador
   const [activeStageFilter, setActiveStageFilter] = useState<'GROUPS' | 'ROUND_32' | 'ROUND_16' | 'QUARTERS' | 'SEMIS_FINAL'>('GROUPS');
-  const [matchInputs, setMatchInputs] = useState<Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string }>>({});
+  const [matchInputs, setMatchInputs] = useState<Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string; penaltyWinnerId?: string }>>({});
 
   useEffect(() => {
     if (polla && activeTab === 'settings') {
@@ -92,13 +92,14 @@ export default function AdminPanelPage({ params }: PageProps) {
       setTeams(teamsList);
 
       // Precargar marcadores e IDs para el puntuador
-      const inputsMap: Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string }> = {};
+      const inputsMap: Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string; penaltyWinnerId?: string }> = {};
       matchesList.forEach(m => {
         inputsMap[m.id] = {
           home: m.home_score !== null ? m.home_score.toString() : '',
           away: m.away_score !== null ? m.away_score.toString() : '',
           homeTeamId: m.home_team_id || undefined,
-          awayTeamId: m.away_team_id || undefined
+          awayTeamId: m.away_team_id || undefined,
+          penaltyWinnerId: m.penalty_winner_id || undefined
         };
       });
       setMatchInputs(inputsMap);
@@ -204,14 +205,23 @@ export default function AdminPanelPage({ params }: PageProps) {
   };
 
   // Cambiar input de partido
-  const handleMatchInputChange = (matchId: number, field: 'home' | 'away' | 'homeTeamId' | 'awayTeamId', val: string) => {
-    setMatchInputs(prev => ({
-      ...prev,
-      [matchId]: {
+  const handleMatchInputChange = (matchId: number, field: 'home' | 'away' | 'homeTeamId' | 'awayTeamId' | 'penaltyWinnerId', val: string) => {
+    setMatchInputs(prev => {
+      const updated = {
         ...prev[matchId],
         [field]: val
+      };
+      
+      // Si el cambio fue en goles y ya no es un empate, remover el penaltyWinnerId
+      if ((field === 'home' || field === 'away') && updated.home !== updated.away) {
+        updated.penaltyWinnerId = undefined;
       }
-    }));
+      
+      return {
+        ...prev,
+        [matchId]: updated
+      };
+    });
   };
 
   // Guardar Marcador Oficial (Puntuador)
@@ -219,6 +229,13 @@ export default function AdminPanelPage({ params }: PageProps) {
     const input = matchInputs[matchId];
     if (input.home === '' || input.away === '') {
       alert('Por favor introduce marcadores válidos.');
+      return;
+    }
+
+    // Si es playoff y el resultado es empate, debe tener un ganador de penales
+    const match = matches.find(m => m.id === matchId);
+    if (match && match.stage !== 'GROUPS' && input.home === input.away && !input.penaltyWinnerId) {
+      alert('Por favor selecciona qué equipo avanzó en la tanda de penales.');
       return;
     }
 
@@ -232,7 +249,8 @@ export default function AdminPanelPage({ params }: PageProps) {
         parseInt(input.away),
         'FINISHED',
         input.homeTeamId || undefined,
-        input.awayTeamId || undefined
+        input.awayTeamId || undefined,
+        input.penaltyWinnerId || null
       );
       setSuccessMsg(`¡Partido #${matchId} cerrado y puntuado correctamente!`);
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -614,6 +632,39 @@ export default function AdminPanelPage({ params }: PageProps) {
                       </div>
 
                     </div>
+
+                    {/* Selector de Penales para Admin */}
+                    {isPlayoff && inputs.home !== '' && inputs.away !== '' && inputs.home === inputs.away && (
+                      <div className="mt-3 p-3 bg-slate-950/40 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                          🏆 ¿Quién avanzó por penales?
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleMatchInputChange(match.id, 'penaltyWinnerId', inputs.homeTeamId || '')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              inputs.penaltyWinnerId === inputs.homeTeamId
+                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                            }`}
+                          >
+                            👑 {inputs.homeTeamId ? teams.find(t => t.id === inputs.homeTeamId)?.name : 'Local'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMatchInputChange(match.id, 'penaltyWinnerId', inputs.awayTeamId || '')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              inputs.penaltyWinnerId === inputs.awayTeamId
+                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                            }`}
+                          >
+                            👑 {inputs.awayTeamId ? teams.find(t => t.id === inputs.awayTeamId)?.name : 'Visita'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Botón de guardar para este partido */}
                     <div className="flex justify-between items-center mt-2 border-t border-slate-900/60 pt-3">

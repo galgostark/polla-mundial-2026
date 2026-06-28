@@ -50,7 +50,7 @@ export default function PronosticosPage({ params }: PageProps) {
   const [activeMainTab, setActiveMainTab] = useState<'predict' | 'summary'>('predict');
   const [activeStageTab, setActiveStageTab] = useState<'groups' | 'ROUND_32' | 'ROUND_16' | 'QUARTERS' | 'SEMIS_FINAL'>('groups');
   const [activeGroupTab, setActiveGroupTab] = useState('A');
-  const [groupPredictions, setGroupPredictions] = useState<Record<number, { home: string; away: string }>>({});
+  const [groupPredictions, setGroupPredictions] = useState<Record<number, { home: string; away: string; penalty_winner_id?: string | null }>>({});
 
   // 12 Grupos oficiales
   const groupsList = ['A','B','C','D','E','F','G','H','I','J','K','L'];
@@ -77,20 +77,21 @@ export default function PronosticosPage({ params }: PageProps) {
 
         // Cargar predicciones guardadas de marcadores
         const savedPreds = await PredictionsService.getPredictions(participant.id);
-        const predsMap: Record<number, { home: string; away: string }> = {};
+        const predsMap: Record<number, { home: string; away: string; penalty_winner_id?: string | null }> = {};
         
         // Poblar con las predicciones guardadas
         savedPreds.forEach(pr => {
           predsMap[pr.match_id] = {
             home: pr.home_score.toString(),
-            away: pr.away_score.toString()
+            away: pr.away_score.toString(),
+            penalty_winner_id: pr.penalty_winner_id || null
           };
         });
 
         // Poblar por defecto con vacíos para los partidos que falten
         loadedMatches.forEach(m => {
           if (!predsMap[m.id]) {
-            predsMap[m.id] = { home: '', away: '' };
+            predsMap[m.id] = { home: '', away: '', penalty_winner_id: null };
           }
         });
 
@@ -122,13 +123,22 @@ export default function PronosticosPage({ params }: PageProps) {
     // Solo permitir números
     const cleanVal = val.replace(/\D/g, '');
     
-    setGroupPredictions(prev => ({
-      ...prev,
-      [matchId]: {
+    setGroupPredictions(prev => {
+      const updated = {
         ...prev[matchId],
         [side]: cleanVal
+      };
+      
+      // Si ya no es un empate, remover el penalty_winner_id
+      if (updated.home !== updated.away) {
+        updated.penalty_winner_id = null;
       }
-    }));
+      
+      return {
+        ...prev,
+        [matchId]: updated
+      };
+    });
     setErrorMsg('');
   };
 
@@ -141,6 +151,7 @@ export default function PronosticosPage({ params }: PageProps) {
       setErrorMsg('');
       setSuccessMsg('');
       
+      let missingPenalties = false;
       // Filtrar predicciones estructuradas e ignorar vacíos
       const predictionsPayload = Object.keys(groupPredictions)
         .map(id => {
@@ -155,13 +166,25 @@ export default function PronosticosPage({ params }: PageProps) {
           const pred = groupPredictions[matchId];
           if (pred.home === '' || pred.away === '') return null;
           
+          // Si es playoff y el resultado es empate, debe tener un ganador de penales
+          if (match && match.stage !== 'GROUPS' && pred.home === pred.away && !pred.penalty_winner_id) {
+            missingPenalties = true;
+          }
+          
           return {
             match_id: matchId,
             home_score: parseInt(pred.home),
-            away_score: parseInt(pred.away)
+            away_score: parseInt(pred.away),
+            penalty_winner_id: pred.penalty_winner_id || null
           };
         })
-        .filter(Boolean) as { match_id: number; home_score: number; away_score: number }[];
+        .filter(Boolean) as { match_id: number; home_score: number; away_score: number; penalty_winner_id?: string | null }[];
+
+      if (missingPenalties) {
+        setErrorMsg('Por favor define quién clasifica por penales en todos los partidos con predicción de empate.');
+        setSubmitting(false);
+        return;
+      }
 
       if (predictionsPayload.length > 0) {
         await PredictionsService.savePredictions(participant.id, predictionsPayload);
@@ -216,6 +239,7 @@ export default function PronosticosPage({ params }: PageProps) {
         home_score: parseInt(pred.home),
         away_score: parseInt(pred.away),
         points_won: null,
+        penalty_winner_id: pred.penalty_winner_id || null,
         created_at: ''
       };
     })
@@ -479,6 +503,57 @@ export default function PronosticosPage({ params }: PageProps) {
                       </div>
 
                     </div>
+
+                    {/* Selector de Penales (Playoffs con empate) */}
+                    {match.stage !== 'GROUPS' && pred.home !== '' && pred.away !== '' && pred.home === pred.away && (
+                      <div className="mt-3 p-3 bg-slate-950/40 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                          🏆 ¿Quién clasifica por penales?
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={isClosed}
+                            onClick={() => {
+                              setGroupPredictions(prev => ({
+                                ...prev,
+                                [match.id]: {
+                                  ...prev[match.id],
+                                  penalty_winner_id: homeTeam?.id || null
+                                }
+                              }));
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              pred.penalty_winner_id === homeTeam?.id
+                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                            }`}
+                          >
+                            👑 {homeTeam?.name}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isClosed}
+                            onClick={() => {
+                              setGroupPredictions(prev => ({
+                                ...prev,
+                                [match.id]: {
+                                  ...prev[match.id],
+                                  penalty_winner_id: awayTeam?.id || null
+                                }
+                              }));
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              pred.penalty_winner_id === awayTeam?.id
+                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                            }`}
+                          >
+                            👑 {awayTeam?.name}
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Footer / Estado Cerrado */}
                     {isClosed && (

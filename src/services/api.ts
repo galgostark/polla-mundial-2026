@@ -271,8 +271,8 @@ export const calculateDerivedBracket = (
     } else if (pred.home_score < pred.away_score) {
       return match.away_team_id;
     } else {
-      // Si hay empate, por defecto pasa el local (para tener un clasificado)
-      return match.home_team_id;
+      // Si hay empate, usamos el ganador de penales predicho o el local por defecto
+      return pred.penalty_winner_id || match.home_team_id;
     }
   };
   
@@ -488,14 +488,15 @@ export const PredictionsService = {
   },
 
   // 2. Guardar cartilla de predicciones
-  savePredictions: async (participantId: string, list: { match_id: number; home_score: number; away_score: number }[]): Promise<void> => {
+  savePredictions: async (participantId: string, list: { match_id: number; home_score: number; away_score: number; penalty_winner_id?: string | null }[]): Promise<void> => {
     let pollaId = '';
     if (isSupabaseConfigured()) {
-      const rows = list.map((item: { match_id: number; home_score: number; away_score: number }) => ({
+      const rows = list.map((item) => ({
         participant_id: participantId,
         match_id: item.match_id,
         home_score: item.home_score,
-        away_score: item.away_score
+        away_score: item.away_score,
+        penalty_winner_id: item.penalty_winner_id || null
       }));
       // UPSERT en Supabase
       const { error } = await supabase.from('predictions').upsert(rows, { onConflict: 'participant_id,match_id' });
@@ -509,13 +510,14 @@ export const PredictionsService = {
       // Filtrar predicciones antiguas
       let filtered = db.predictions.filter((p: Prediction) => p.participant_id !== participantId);
       
-      const newPreds: Prediction[] = list.map((item: { match_id: number; home_score: number; away_score: number }) => ({
+      const newPreds: Prediction[] = list.map((item) => ({
         id: generateUUID(),
         participant_id: participantId,
         match_id: item.match_id,
         home_score: item.home_score,
         away_score: item.away_score,
         points_won: null,
+        penalty_winner_id: item.penalty_winner_id || null,
         created_at: new Date().toISOString()
       }));
       
@@ -638,13 +640,15 @@ export const MatchesService = {
     awayScore: number, 
     status: 'SCHEDULED' | 'LIVE' | 'FINISHED',
     homeTeamId?: string,
-    awayTeamId?: string
+    awayTeamId?: string,
+    penaltyWinnerId?: string | null
   ): Promise<void> => {
     // 1. Actualizar el partido en la DB
     if (isSupabaseConfigured()) {
       const updateData: any = { home_score: homeScore, away_score: awayScore, status };
       if (homeTeamId) updateData.home_team_id = homeTeamId;
       if (awayTeamId) updateData.away_team_id = awayTeamId;
+      if (penaltyWinnerId !== undefined) updateData.penalty_winner_id = penaltyWinnerId;
       
       const { error } = await supabase.from('matches').update(updateData).eq('id', matchId);
       if (error) throw error;
@@ -659,6 +663,7 @@ export const MatchesService = {
           status,
           home_team_id: homeTeamId || m.home_team_id,
           away_team_id: awayTeamId || m.away_team_id,
+          penalty_winner_id: penaltyWinnerId !== undefined ? penaltyWinnerId : m.penalty_winner_id
         };
       });
       

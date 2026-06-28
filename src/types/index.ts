@@ -29,6 +29,7 @@ export interface Match {
   stage: StageType;
   match_date: string;
   status: MatchStatusType;
+  penalty_winner_id?: string | null;
   // Propiedades unidas en joins
   home_team?: Team;
   away_team?: Team;
@@ -53,6 +54,7 @@ export interface Prediction {
   home_score: number;
   away_score: number;
   points_won: number | null; // null si no ha terminado
+  penalty_winner_id?: string | null;
   created_at: string;
 }
 
