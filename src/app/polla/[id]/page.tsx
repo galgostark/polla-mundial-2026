@@ -134,6 +134,7 @@ export default function PollaDashboardPage({ params }: PageProps) {
       'Puntos Totales': p.total_points,
       'Marcadores Exactos (Plenos)': p.exact_matches,
       'Aciertos Simples': p.correct_results,
+      'Aciertos R32': p.total_points - (p.exact_matches * 4 + p.correct_results * 3),
       Estado: p.is_paid ? 'Pago Confirmado' : 'Pago Pendiente'
     }));
 
@@ -182,9 +183,10 @@ export default function PollaDashboardPage({ params }: PageProps) {
     doc.setFontSize(10);
     doc.text('Pos', 14, currentY);
     doc.text('Participante', 28, currentY);
-    doc.text('Puntos', 90, currentY);
-    doc.text('Marcadores Exactos (Plenos)', 115, currentY);
-    doc.text('Aciertos Simples', 165, currentY);
+    doc.text('Puntos Totales', 90, currentY);
+    doc.text('Plenos (4 pts)', 120, currentY);
+    doc.text('Simples (3 pts)', 150, currentY);
+    doc.text('Puntos R32', 178, currentY);
     
     // Dibujar línea debajo de la cabecera
     doc.setDrawColor(226, 232, 240);
@@ -202,9 +204,10 @@ export default function PollaDashboardPage({ params }: PageProps) {
       
       doc.text((idx + 1).toString(), 15, currentY);
       doc.text(p.name, 28, currentY);
-      doc.text(p.total_points.toString(), 95, currentY);
-      doc.text(p.exact_matches.toString(), 135, currentY);
-      doc.text(p.correct_results.toString(), 175, currentY);
+      doc.text(p.total_points.toString(), 98, currentY);
+      doc.text(p.exact_matches.toString(), 128, currentY);
+      doc.text(p.correct_results.toString(), 158, currentY);
+      doc.text((p.total_points - (p.exact_matches * 4 + p.correct_results * 3)).toString(), 186, currentY);
       
       currentY += 8;
     });
@@ -368,8 +371,9 @@ export default function PollaDashboardPage({ params }: PageProps) {
                   <th className="py-4 px-6 text-center w-16">Puesto</th>
                   <th className="py-4 px-6">Participante</th>
                   <th className="py-4 px-6 text-center">Puntos Totales</th>
-                  <th className="py-4 px-6 text-center">Plenos (Exacto)</th>
-                  <th className="py-4 px-6 text-center">Aciertos Simples</th>
+                  <th className="py-4 px-6 text-center">Acierto Marcador (Plenos)</th>
+                  <th className="py-4 px-6 text-center">Acierto Partido (Simples)</th>
+                  <th className="py-4 px-6 text-center">Acierto Equipos R32</th>
                   <th className="py-4 px-6 text-center w-32">Estado</th>
                   <th className="py-4 px-6 text-center w-24">Acciones</th>
                 </tr>
@@ -417,14 +421,19 @@ export default function PollaDashboardPage({ params }: PageProps) {
                           {part.total_points}
                         </td>
 
-                        {/* Marcadores Exactos */}
+                        {/* Acierto Marcador (Plenos) */}
                         <td className="py-4 px-6 text-center text-sm font-extrabold text-accent">
-                          {part.exact_matches}
+                          {part.exact_matches} <span className="text-[10px] text-slate-500 font-medium ml-1">({part.exact_matches * 4} pts)</span>
                         </td>
 
-                        {/* Aciertos Simples */}
+                        {/* Acierto Partido (Simples) */}
                         <td className="py-4 px-6 text-center text-sm text-slate-300 font-semibold">
-                          {part.correct_results}
+                          {part.correct_results} <span className="text-[10px] text-slate-500 font-medium ml-1">({part.correct_results * 3} pts)</span>
+                        </td>
+
+                        {/* Acierto Equipos R32 */}
+                        <td className="py-4 px-6 text-center text-sm text-emerald-400 font-bold">
+                          {part.total_points - (part.exact_matches * 4 + part.correct_results * 3)} <span className="text-[10px] text-slate-500 font-medium ml-1">pts</span>
                         </td>
 
                         {/* Estado de Pago */}
@@ -517,6 +526,28 @@ export default function PollaDashboardPage({ params }: PageProps) {
                     <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-850 text-center">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Aciertos Simples</span>
                       <span className="text-2xl font-black text-slate-300 block mt-0.5">{inspectParticipant.correct_results}</span>
+                    </div>
+                  </div>
+
+                  {/* Desglose de Puntos */}
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-850 space-y-2 text-xs">
+                    <h5 className="font-extrabold text-slate-300 border-b border-slate-850 pb-2 flex justify-between">
+                      <span>📊 Desglose de Puntuación</span>
+                      <span className="text-primary font-black">{inspectParticipant.total_points} pts totales</span>
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                      <div className="flex justify-between sm:flex-col sm:justify-start gap-1">
+                        <span className="text-slate-400 font-bold text-[10px] uppercase">Acierto Marcador (Plenos)</span>
+                        <span className="font-mono text-accent font-black text-sm">{inspectParticipant.exact_matches} x 4 pts = {inspectParticipant.exact_matches * 4} pts</span>
+                      </div>
+                      <div className="flex justify-between sm:flex-col sm:justify-start gap-1 border-t sm:border-t-0 sm:border-l border-slate-850 pt-2 sm:pt-0 sm:pl-4">
+                        <span className="text-slate-400 font-bold text-[10px] uppercase">Acierto Partido (Simples)</span>
+                        <span className="font-mono text-slate-300 font-black text-sm">{inspectParticipant.correct_results} x 3 pts = {inspectParticipant.correct_results * 3} pts</span>
+                      </div>
+                      <div className="flex justify-between sm:flex-col sm:justify-start gap-1 border-t sm:border-t-0 sm:border-l border-slate-850 pt-2 sm:pt-0 sm:pl-4">
+                        <span className="text-slate-400 font-bold text-[10px] uppercase">Equipos Clasificados R32</span>
+                        <span className="font-mono text-emerald-400 font-black text-sm">{inspectParticipant.total_points - (inspectParticipant.exact_matches * 4 + inspectParticipant.correct_results * 3)} pts</span>
+                      </div>
                     </div>
                   </div>
 
