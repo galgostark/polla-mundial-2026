@@ -132,9 +132,11 @@ export default function PollaDashboardPage({ params }: PageProps) {
       Posición: idx + 1,
       Participante: p.name,
       'Puntos Totales': p.total_points,
+      'Pts Grupos (Partidos)': p.groups_match_points || 0,
+      'Pts R32 (Partidos)': p.r32_match_points || 0,
+      'Pts R32 (Equipos)': p.bracket_points || 0,
       'Marcadores Exactos (Plenos)': p.exact_matches,
       'Aciertos Simples': p.correct_results,
-      'Aciertos R32': p.total_points - (p.exact_matches * 4 + p.correct_results * 3),
       Estado: p.is_paid ? 'Pago Confirmado' : 'Pago Pendiente'
     }));
 
@@ -180,13 +182,15 @@ export default function PollaDashboardPage({ params }: PageProps) {
     // Cabecera de Tabla
     let currentY = 46;
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9); // reducir tamaño de letra un poco para encajar columnas
     doc.text('Pos', 14, currentY);
-    doc.text('Participante', 28, currentY);
-    doc.text('Puntos Totales', 90, currentY);
-    doc.text('Plenos (4 pts)', 120, currentY);
-    doc.text('Simples (3 pts)', 150, currentY);
-    doc.text('Puntos R32', 178, currentY);
+    doc.text('Participante', 24, currentY);
+    doc.text('Pts Tot', 72, currentY);
+    doc.text('Pts Grupos', 90, currentY);
+    doc.text('Pts R32 (Part)', 112, currentY);
+    doc.text('Pts R32 (Equi)', 138, currentY);
+    doc.text('Plenos', 165, currentY);
+    doc.text('Simples', 182, currentY);
     
     // Dibujar línea debajo de la cabecera
     doc.setDrawColor(226, 232, 240);
@@ -203,11 +207,13 @@ export default function PollaDashboardPage({ params }: PageProps) {
       }
       
       doc.text((idx + 1).toString(), 15, currentY);
-      doc.text(p.name, 28, currentY);
-      doc.text(p.total_points.toString(), 98, currentY);
-      doc.text(p.exact_matches.toString(), 128, currentY);
-      doc.text(p.correct_results.toString(), 158, currentY);
-      doc.text((p.total_points - (p.exact_matches * 4 + p.correct_results * 3)).toString(), 186, currentY);
+      doc.text(p.name, 24, currentY);
+      doc.text(p.total_points.toString(), 76, currentY);
+      doc.text((p.groups_match_points || 0).toString(), 96, currentY);
+      doc.text((p.r32_match_points || 0).toString(), 120, currentY);
+      doc.text((p.bracket_points || 0).toString(), 146, currentY);
+      doc.text(p.exact_matches.toString(), 170, currentY);
+      doc.text(p.correct_results.toString(), 187, currentY);
       
       currentY += 8;
     });
@@ -371,9 +377,11 @@ export default function PollaDashboardPage({ params }: PageProps) {
                   <th className="py-4 px-6 text-center w-16">Puesto</th>
                   <th className="py-4 px-6">Participante</th>
                   <th className="py-4 px-6 text-center">Puntos Totales</th>
+                  <th className="py-4 px-6 text-center">Pts Grupos</th>
+                  <th className="py-4 px-6 text-center">Pts R32 (Partidos)</th>
+                  <th className="py-4 px-6 text-center">Pts R32 (Equipos)</th>
                   <th className="py-4 px-6 text-center">Acierto Marcador (Plenos)</th>
                   <th className="py-4 px-6 text-center">Acierto Partido (Simples)</th>
-                  <th className="py-4 px-6 text-center">Acierto Equipos R32</th>
                   <th className="py-4 px-6 text-center w-32">Estado</th>
                   <th className="py-4 px-6 text-center w-24">Acciones</th>
                 </tr>
@@ -421,6 +429,21 @@ export default function PollaDashboardPage({ params }: PageProps) {
                           {part.total_points}
                         </td>
 
+                        {/* Pts Grupos */}
+                        <td className="py-4 px-6 text-center text-sm text-slate-300 font-semibold">
+                          {part.groups_match_points || 0} <span className="text-[10px] text-slate-500 font-medium">pts</span>
+                        </td>
+
+                        {/* Pts R32 (Partidos) */}
+                        <td className="py-4 px-6 text-center text-sm text-slate-300 font-semibold">
+                          {part.r32_match_points || 0} <span className="text-[10px] text-slate-500 font-medium">pts</span>
+                        </td>
+
+                        {/* Pts R32 (Equipos) */}
+                        <td className="py-4 px-6 text-center text-sm text-emerald-400 font-bold">
+                          {part.bracket_points || 0} <span className="text-[10px] text-slate-500 font-medium">pts</span>
+                        </td>
+
                         {/* Acierto Marcador (Plenos) */}
                         <td className="py-4 px-6 text-center text-sm font-extrabold text-accent">
                           {part.exact_matches} <span className="text-[10px] text-slate-500 font-medium ml-1">({part.exact_matches * 4} pts)</span>
@@ -429,11 +452,6 @@ export default function PollaDashboardPage({ params }: PageProps) {
                         {/* Acierto Partido (Simples) */}
                         <td className="py-4 px-6 text-center text-sm text-slate-300 font-semibold">
                           {part.correct_results} <span className="text-[10px] text-slate-500 font-medium ml-1">({part.correct_results * 3} pts)</span>
-                        </td>
-
-                        {/* Acierto Equipos R32 */}
-                        <td className="py-4 px-6 text-center text-sm text-emerald-400 font-bold">
-                          {part.total_points - (part.exact_matches * 4 + part.correct_results * 3)} <span className="text-[10px] text-slate-500 font-medium ml-1">pts</span>
                         </td>
 
                         {/* Estado de Pago */}

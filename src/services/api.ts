@@ -57,11 +57,28 @@ const recalculateLocalPoints = (matchId: number, homeScore: number, awayScore: n
     const exactCount = userPreds.filter((pr: Prediction) => pr.points_won === 4).length;
     const simpleCount = userPreds.filter((pr: Prediction) => pr.points_won === 3).length;
     
+    const groupsMatchPoints = userPreds
+      .filter((pr: Prediction) => {
+        const m = db.matches.find((match: Match) => match.id === pr.match_id);
+        return m?.stage === 'GROUPS';
+      })
+      .reduce((sum: number, pr: Prediction) => sum + (pr.points_won || 0), 0);
+
+    const r32MatchPoints = userPreds
+      .filter((pr: Prediction) => {
+        const m = db.matches.find((match: Match) => match.id === pr.match_id);
+        return m?.stage === 'ROUND_32';
+      })
+      .reduce((sum: number, pr: Prediction) => sum + (pr.points_won || 0), 0);
+
     return {
       ...part,
       total_points: matchPoints + bracketPoints,
       exact_matches: exactCount,
-      correct_results: simpleCount
+      correct_results: simpleCount,
+      groups_match_points: groupsMatchPoints,
+      r32_match_points: r32MatchPoints,
+      bracket_points: bracketPoints
     };
   });
   
@@ -147,9 +164,26 @@ const recalculateLocalBrackets = (pollaId: string) => {
     const bracket = db.bracketPredictions.find((b: BracketPrediction) => b.participant_id === part.id);
     const bracketPoints = bracket ? bracket.points_won : 0;
     
+    const groupsMatchPoints = userPreds
+      .filter((pr: Prediction) => {
+        const m = db.matches.find((match: Match) => match.id === pr.match_id);
+        return m?.stage === 'GROUPS';
+      })
+      .reduce((sum: number, pr: Prediction) => sum + (pr.points_won || 0), 0);
+
+    const r32MatchPoints = userPreds
+      .filter((pr: Prediction) => {
+        const m = db.matches.find((match: Match) => match.id === pr.match_id);
+        return m?.stage === 'ROUND_32';
+      })
+      .reduce((sum: number, pr: Prediction) => sum + (pr.points_won || 0), 0);
+
     return {
       ...part,
-      total_points: matchPoints + bracketPoints
+      total_points: matchPoints + bracketPoints,
+      groups_match_points: groupsMatchPoints,
+      r32_match_points: r32MatchPoints,
+      bracket_points: bracketPoints
     };
   });
   
@@ -417,6 +451,9 @@ export const PollaService = {
         total_points: 0,
         exact_matches: 0,
         correct_results: 0,
+        groups_match_points: 0,
+        r32_match_points: 0,
+        bracket_points: 0,
         created_at: new Date().toISOString(),
       };
       db.participants.push(newPart);

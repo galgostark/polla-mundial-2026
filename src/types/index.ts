@@ -44,6 +44,9 @@ export interface Participant {
   total_points: number;
   exact_matches: number;
   correct_results: number;
+  groups_match_points: number;
+  r32_match_points: number;
+  bracket_points: number;
   created_at: string;
 }
 
