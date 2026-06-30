@@ -641,7 +641,7 @@ export const MatchesService = {
       const { data, error } = await supabase
         .from('matches')
         .select(`
-          id, home_team_id, away_team_id, home_score, away_score, stage, match_date, status,
+          id, home_team_id, away_team_id, home_score, away_score, stage, match_date, status, penalty_winner_id, penalties_home, penalties_away,
           home_team:teams!matches_home_team_id_fkey(*),
           away_team:teams!matches_away_team_id_fkey(*)
         `)
@@ -678,7 +678,9 @@ export const MatchesService = {
     status: 'SCHEDULED' | 'LIVE' | 'FINISHED',
     homeTeamId?: string,
     awayTeamId?: string,
-    penaltyWinnerId?: string | null
+    penaltyWinnerId?: string | null,
+    penaltiesHome?: number | null,
+    penaltiesAway?: number | null
   ): Promise<void> => {
     // 1. Actualizar el partido en la DB
     if (isSupabaseConfigured()) {
@@ -686,6 +688,8 @@ export const MatchesService = {
       if (homeTeamId) updateData.home_team_id = homeTeamId;
       if (awayTeamId) updateData.away_team_id = awayTeamId;
       if (penaltyWinnerId !== undefined) updateData.penalty_winner_id = penaltyWinnerId;
+      if (penaltiesHome !== undefined) updateData.penalties_home = penaltiesHome;
+      if (penaltiesAway !== undefined) updateData.penalties_away = penaltiesAway;
       
       const { error } = await supabase.from('matches').update(updateData).eq('id', matchId);
       if (error) throw error;
@@ -700,7 +704,9 @@ export const MatchesService = {
           status,
           home_team_id: homeTeamId || m.home_team_id,
           away_team_id: awayTeamId || m.away_team_id,
-          penalty_winner_id: penaltyWinnerId !== undefined ? penaltyWinnerId : m.penalty_winner_id
+          penalty_winner_id: penaltyWinnerId !== undefined ? penaltyWinnerId : m.penalty_winner_id,
+          penalties_home: penaltiesHome !== undefined ? penaltiesHome : m.penalties_home,
+          penalties_away: penaltiesAway !== undefined ? penaltiesAway : m.penalties_away
         };
       });
       

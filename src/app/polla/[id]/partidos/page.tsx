@@ -330,11 +330,18 @@ export default function PartidosFixturePage({ params }: PageProps) {
                     </div>
 
                     {/* Marcador Real */}
-                    <div className="flex items-center justify-center bg-slate-950 px-4 py-2 rounded-xl border border-slate-850 shrink-0">
+                    <div className="flex flex-col items-center justify-center bg-slate-950 px-4 py-2 rounded-xl border border-slate-850 shrink-0">
                       {match.status === 'FINISHED' || match.status === 'LIVE' ? (
-                        <span className="text-lg font-black tracking-widest text-accent">
-                          {match.home_score} - {match.away_score}
-                        </span>
+                        <>
+                          <span className="text-lg font-black tracking-widest text-accent">
+                            {match.home_score} - {match.away_score}
+                          </span>
+                          {match.stage !== 'GROUPS' && match.home_score === match.away_score && match.penalties_home !== null && match.penalties_away !== null && (
+                            <span className="text-[10px] font-extrabold text-emerald-400 mt-0.5">
+                              ({match.penalties_home} - {match.penalties_away} pen)
+                            </span>
+                          )}
+                        </>
                       ) : (
                         <span className="text-xs font-bold text-slate-500">
                           VS

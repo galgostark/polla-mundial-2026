@@ -643,12 +643,29 @@ export default function PollaDashboardPage({ params }: PageProps) {
                                 )}
                               </div>
                               
-                              <div className="flex-1 flex items-center justify-between gap-2 px-1 min-w-0">
-                                <span className="font-extrabold text-slate-300 truncate text-right w-16">{match.home_team_id || 'TBD'}</span>
-                                <span className="font-black bg-slate-900 px-2.5 py-1 rounded text-accent shrink-0">
-                                  {pred.home_score} - {pred.away_score}
-                                </span>
-                                <span className="font-extrabold text-slate-300 truncate text-left w-16">{match.away_team_id || 'TBD'}</span>
+                              <div className="flex-1 flex flex-col items-center min-w-0">
+                                <div className="flex items-center justify-between gap-2 w-full">
+                                  <span className="font-extrabold text-slate-300 truncate text-right w-16">{match.home_team_id || 'TBD'}</span>
+                                  <div className="flex flex-col items-center shrink-0">
+                                    <span className="font-black bg-slate-900 px-2.5 py-1 rounded text-accent">
+                                      {pred.home_score} - {pred.away_score}
+                                    </span>
+                                    {pred.home_score === pred.away_score && match.stage !== 'GROUPS' && pred.penalty_winner_id && (
+                                      <span className="text-[7px] text-slate-400 font-extrabold mt-0.5">
+                                        Pen: {pred.penalty_winner_id === match.home_team_id ? 'Local' : 'Visita'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="font-extrabold text-slate-300 truncate text-left w-16">{match.away_team_id || 'TBD'}</span>
+                                </div>
+                                {match.status === 'FINISHED' && (
+                                  <span className="text-[8px] text-slate-500 font-bold block text-center mt-1">
+                                    Real: {match.home_score}-{match.away_score}
+                                    {match.stage !== 'GROUPS' && match.home_score === match.away_score && match.penalties_home !== null && match.penalties_away !== null && (
+                                      <> ({match.penalties_home}-{match.penalties_away} pen)</>
+                                    )}
+                                  </span>
+                                )}
                               </div>
                               
                               {ptsBadge}

@@ -68,7 +68,7 @@ export default function AdminPanelPage({ params }: PageProps) {
 
   // Estados del Puntuador
   const [activeStageFilter, setActiveStageFilter] = useState<'GROUPS' | 'ROUND_32' | 'ROUND_16' | 'QUARTERS' | 'SEMIS_FINAL'>('GROUPS');
-  const [matchInputs, setMatchInputs] = useState<Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string; penaltyWinnerId?: string }>>({});
+  const [matchInputs, setMatchInputs] = useState<Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string; penaltyWinnerId?: string; penaltiesHome?: string; penaltiesAway?: string }>>({});
 
   useEffect(() => {
     if (polla && activeTab === 'settings') {
@@ -92,14 +92,16 @@ export default function AdminPanelPage({ params }: PageProps) {
       setTeams(teamsList);
 
       // Precargar marcadores e IDs para el puntuador
-      const inputsMap: Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string; penaltyWinnerId?: string }> = {};
+      const inputsMap: Record<number, { home: string; away: string; homeTeamId?: string; awayTeamId?: string; penaltyWinnerId?: string; penaltiesHome?: string; penaltiesAway?: string }> = {};
       matchesList.forEach(m => {
         inputsMap[m.id] = {
           home: m.home_score !== null ? m.home_score.toString() : '',
           away: m.away_score !== null ? m.away_score.toString() : '',
           homeTeamId: m.home_team_id || undefined,
           awayTeamId: m.away_team_id || undefined,
-          penaltyWinnerId: m.penalty_winner_id || undefined
+          penaltyWinnerId: m.penalty_winner_id || undefined,
+          penaltiesHome: m.penalties_home !== null && m.penalties_home !== undefined ? m.penalties_home.toString() : '',
+          penaltiesAway: m.penalties_away !== null && m.penalties_away !== undefined ? m.penalties_away.toString() : ''
         };
       });
       setMatchInputs(inputsMap);
@@ -205,16 +207,31 @@ export default function AdminPanelPage({ params }: PageProps) {
   };
 
   // Cambiar input de partido
-  const handleMatchInputChange = (matchId: number, field: 'home' | 'away' | 'homeTeamId' | 'awayTeamId' | 'penaltyWinnerId', val: string) => {
+  const handleMatchInputChange = (matchId: number, field: 'home' | 'away' | 'homeTeamId' | 'awayTeamId' | 'penaltyWinnerId' | 'penaltiesHome' | 'penaltiesAway', val: string) => {
     setMatchInputs(prev => {
       const updated = {
         ...prev[matchId],
         [field]: val
       };
       
-      // Si el cambio fue en goles y ya no es un empate, remover el penaltyWinnerId
+      // Si el cambio fue en goles y ya no es un empate, remover el penaltyWinnerId y las puntuaciones de penales
       if ((field === 'home' || field === 'away') && updated.home !== updated.away) {
         updated.penaltyWinnerId = undefined;
+        updated.penaltiesHome = '';
+        updated.penaltiesAway = '';
+      }
+      
+      // Si se ingresan penales, derivar automáticamente el ganador de penales
+      if (field === 'penaltiesHome' || field === 'penaltiesAway') {
+        const pHome = parseInt(updated.penaltiesHome || '0');
+        const pAway = parseInt(updated.penaltiesAway || '0');
+        if (pHome > pAway) {
+          updated.penaltyWinnerId = updated.homeTeamId;
+        } else if (pAway > pHome) {
+          updated.penaltyWinnerId = updated.awayTeamId;
+        } else {
+          updated.penaltyWinnerId = undefined;
+        }
       }
       
       return {
@@ -232,11 +249,24 @@ export default function AdminPanelPage({ params }: PageProps) {
       return;
     }
 
-    // Si es playoff y el resultado es empate, debe tener un ganador de penales
+    // Si es playoff y el resultado es empate, debe tener penales definidos con un ganador
     const match = matches.find(m => m.id === matchId);
-    if (match && match.stage !== 'GROUPS' && input.home === input.away && !input.penaltyWinnerId) {
-      alert('Por favor selecciona qué equipo avanzó en la tanda de penales.');
-      return;
+    let pWinnerId = input.penaltyWinnerId || null;
+    let pHomeVal = null;
+    let pAwayVal = null;
+    
+    if (match && match.stage !== 'GROUPS' && input.home === input.away) {
+      if (input.penaltiesHome === '' || input.penaltiesAway === '') {
+        alert('Por favor introduce el marcador de penales.');
+        return;
+      }
+      pHomeVal = parseInt(input.penaltiesHome || '0');
+      pAwayVal = parseInt(input.penaltiesAway || '0');
+      if (pHomeVal === pAwayVal) {
+        alert('La tanda de penales debe tener un ganador (los goles de penales no pueden ser iguales).');
+        return;
+      }
+      pWinnerId = pHomeVal > pAwayVal ? (input.homeTeamId || null) : (input.awayTeamId || null);
     }
 
     try {
@@ -250,7 +280,9 @@ export default function AdminPanelPage({ params }: PageProps) {
         'FINISHED',
         input.homeTeamId || undefined,
         input.awayTeamId || undefined,
-        input.penaltyWinnerId || null
+        pWinnerId,
+        pHomeVal,
+        pAwayVal
       );
       setSuccessMsg(`¡Partido #${matchId} cerrado y puntuado correctamente!`);
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -633,36 +665,39 @@ export default function AdminPanelPage({ params }: PageProps) {
 
                     </div>
 
-                    {/* Selector de Penales para Admin */}
+                    {/* Marcador de Penales para Admin */}
                     {isPlayoff && inputs.home !== '' && inputs.away !== '' && inputs.home === inputs.away && (
                       <div className="mt-3 p-3 bg-slate-950/40 border border-slate-900 rounded-xl flex flex-col items-center gap-2">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                          🏆 ¿Quién avanzó por penales?
+                          🏆 Tanda de Penales (Marcador Oficial)
                         </span>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleMatchInputChange(match.id, 'penaltyWinnerId', inputs.homeTeamId || '')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                              inputs.penaltyWinnerId === inputs.homeTeamId
-                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
-                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
-                            }`}
-                          >
-                            👑 {inputs.homeTeamId ? teams.find(t => t.id === inputs.homeTeamId)?.name : 'Local'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleMatchInputChange(match.id, 'penaltyWinnerId', inputs.awayTeamId || '')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                              inputs.penaltyWinnerId === inputs.awayTeamId
-                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
-                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
-                            }`}
-                          >
-                            👑 {inputs.awayTeamId ? teams.find(t => t.id === inputs.awayTeamId)?.name : 'Visita'}
-                          </button>
+                        <div className="flex items-center gap-2 justify-center">
+                          <span className="text-xs font-extrabold text-slate-400">Penales:</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={2}
+                            value={inputs.penaltiesHome || ''}
+                            onChange={(e) => handleMatchInputChange(match.id, 'penaltiesHome', e.target.value.replace(/\D/g, ''))}
+                            placeholder="Local"
+                            className="w-10 h-8 bg-slate-950 border border-slate-800 focus:border-primary rounded-lg text-center font-bold text-xs focus:outline-none"
+                          />
+                          <span className="text-slate-500 font-bold text-xs">-</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={2}
+                            value={inputs.penaltiesAway || ''}
+                            onChange={(e) => handleMatchInputChange(match.id, 'penaltiesAway', e.target.value.replace(/\D/g, ''))}
+                            placeholder="Visita"
+                            className="w-10 h-8 bg-slate-950 border border-slate-800 focus:border-primary rounded-lg text-center font-bold text-xs focus:outline-none"
+                          />
                         </div>
+                        {inputs.penaltyWinnerId && (
+                          <span className="text-[9px] font-extrabold text-emerald-400 bg-emerald-950/30 border border-emerald-900 px-2 py-0.5 rounded-full mt-1">
+                            Avanza: {teams.find(t => t.id === inputs.penaltyWinnerId)?.name} 👑
+                          </span>
+                        )}
                       </div>
                     )}
 

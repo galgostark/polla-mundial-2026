@@ -504,6 +504,18 @@ export default function PronosticosPage({ params }: PageProps) {
 
                     </div>
 
+                    {/* Marcador Oficial en Pronósticos */}
+                    {match.status === 'FINISHED' && (
+                      <div className="text-[10px] text-center text-slate-500 font-extrabold mt-2 bg-slate-950/20 py-1.5 rounded-lg border border-slate-900/40">
+                        Resultado Oficial: {match.home_score} - {match.away_score}
+                        {match.stage !== 'GROUPS' && match.home_score === match.away_score && match.penalties_home !== null && match.penalties_away !== null && (
+                          <span className="text-emerald-400 ml-1">
+                            ({match.penalties_home} - {match.penalties_away} pen)
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Selector de Penales (Playoffs con empate) */}
                     {match.stage !== 'GROUPS' && pred.home !== '' && pred.away !== '' && pred.home === pred.away && (
                       <div className="mt-3 p-3 bg-slate-950/40 border border-slate-900 rounded-xl flex flex-col items-center gap-2">

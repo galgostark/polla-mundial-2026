@@ -30,6 +30,8 @@ export interface Match {
   match_date: string;
   status: MatchStatusType;
   penalty_winner_id?: string | null;
+  penalties_home?: number | null;
+  penalties_away?: number | null;
   // Propiedades unidas en joins
   home_team?: Team;
   away_team?: Team;
