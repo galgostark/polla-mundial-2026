@@ -134,7 +134,7 @@ export default function PollaDashboardPage({ params }: PageProps) {
       'Puntos Totales': p.total_points,
       'Pts Grupos (Partidos)': p.groups_match_points || 0,
       'Pts R32 (Partidos)': p.r32_match_points || 0,
-      'Pts R32 (Equipos)': p.bracket_points || 0,
+      'Pts Cuadro (Equipos)': p.bracket_points || 0,
       'Marcadores Exactos (Plenos)': p.exact_matches,
       'Aciertos Simples': p.correct_results,
       Estado: p.is_paid ? 'Pago Confirmado' : 'Pago Pendiente'
@@ -188,7 +188,7 @@ export default function PollaDashboardPage({ params }: PageProps) {
     doc.text('Pts Tot', 72, currentY);
     doc.text('Pts Grupos', 90, currentY);
     doc.text('Pts R32 (Part)', 112, currentY);
-    doc.text('Pts R32 (Equi)', 138, currentY);
+    doc.text('Pts Cuadro', 138, currentY);
     doc.text('Plenos', 165, currentY);
     doc.text('Simples', 182, currentY);
     
@@ -379,7 +379,7 @@ export default function PollaDashboardPage({ params }: PageProps) {
                   <th className="py-4 px-6 text-center">Puntos Totales</th>
                   <th className="py-4 px-6 text-center">Pts Grupos</th>
                   <th className="py-4 px-6 text-center">Pts R32 (Partidos)</th>
-                  <th className="py-4 px-6 text-center">Pts R32 (Equipos)</th>
+                  <th className="py-4 px-6 text-center">Pts Cuadro (Equipos)</th>
                   <th className="py-4 px-6 text-center">Acierto Marcador (Plenos)</th>
                   <th className="py-4 px-6 text-center">Acierto Partido (Simples)</th>
                   <th className="py-4 px-6 text-center w-32">Estado</th>
@@ -439,7 +439,7 @@ export default function PollaDashboardPage({ params }: PageProps) {
                           {part.r32_match_points || 0} <span className="text-[10px] text-slate-500 font-medium">pts</span>
                         </td>
 
-                        {/* Pts R32 (Equipos) */}
+                        {/* Pts Cuadro (Equipos) */}
                         <td className="py-4 px-6 text-center text-sm text-emerald-400 font-bold">
                           {part.bracket_points || 0} <span className="text-[10px] text-slate-500 font-medium">pts</span>
                         </td>
@@ -563,8 +563,8 @@ export default function PollaDashboardPage({ params }: PageProps) {
                         <span className="font-mono text-slate-300 font-black text-sm">{inspectParticipant.correct_results} x 3 pts = {inspectParticipant.correct_results * 3} pts</span>
                       </div>
                       <div className="flex justify-between sm:flex-col sm:justify-start gap-1 border-t sm:border-t-0 sm:border-l border-slate-850 pt-2 sm:pt-0 sm:pl-4">
-                        <span className="text-slate-400 font-bold text-[10px] uppercase">Equipos Clasificados R32</span>
-                        <span className="font-mono text-emerald-400 font-black text-sm">{inspectParticipant.total_points - (inspectParticipant.exact_matches * 4 + inspectParticipant.correct_results * 3)} pts</span>
+                        <span className="text-slate-400 font-bold text-[10px] uppercase">Puntos de Cuadro (Bracket)</span>
+                        <span className="font-mono text-emerald-400 font-black text-sm">{inspectParticipant.bracket_points || 0} pts</span>
                       </div>
                     </div>
                   </div>
